@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.times;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
@@ -33,7 +34,13 @@ import com.umc.product.chat.domain.event.ChatMessageSnapshot;
 import com.umc.product.chat.domain.event.ChatMessageUpdatedEvent;
 import com.umc.product.chat.domain.event.ChatReadUpdatedEvent;
 import com.umc.product.chat.domain.event.ChatRealtimeEvent;
+import com.umc.product.community.application.event.CommunityThreadRealtimeAfterCommitEvent;
 import com.umc.product.community.application.port.in.realtime.RelayCommunityThreadRealtimeEventUseCase;
+import com.umc.product.community.domain.event.CommunityThreadDeletedEvent;
+import com.umc.product.community.domain.event.CommunityThreadLifecycleEvent.RealtimeOnly;
+import com.umc.product.community.domain.event.CommunityThreadMemberKickedEvent;
+import com.umc.product.community.domain.event.CommunityThreadMemberLeftEvent;
+import com.umc.product.community.domain.event.CommunityThreadUpdatedEvent;
 
 @ExtendWith(MockitoExtension.class)
 class CommunityChatMessageAfterCommitListenerTest {
@@ -62,6 +69,16 @@ class CommunityChatMessageAfterCommitListenerTest {
         ChatReadUpdatedEvent readUpdated = ChatReadUpdatedEvent.of(2L, 3L, 1L);
         List<ChatRealtimeEvent> events = List.of(messageCreated, messageUpdated, messageDeleted, reactionChanged,
             readUpdated);
+        Instant joinedAt = Instant.parse("2026-11-25T12:00:00Z");
+        Instant changedAt = joinedAt.plusSeconds(60);
+        List<Long> activeMembers = List.of(2L, 3L);
+        CommunityThreadUpdatedEvent threadUpdated = CommunityThreadUpdatedEvent.of(1L, 2L, changedAt);
+        CommunityThreadDeletedEvent threadDeleted = CommunityThreadDeletedEvent.of(1L, 2L, activeMembers, changedAt);
+        CommunityThreadMemberKickedEvent memberKicked =
+            CommunityThreadMemberKickedEvent.of(1L, 2L, 3L, activeMembers, changedAt);
+        CommunityThreadMemberLeftEvent memberLeft =
+            CommunityThreadMemberLeftEvent.of(1L, 3L, activeMembers, joinedAt, changedAt);
+        List<RealtimeOnly> threadEvents = List.of(threadUpdated, threadDeleted, memberKicked, memberLeft);
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
             context.registerBean(TransactionalEventListenerFactory.class);
             context.registerBean("communityChatRealtimeExecutor", Executor.class, () -> executor);
@@ -73,6 +90,7 @@ class CommunityChatMessageAfterCommitListenerTest {
             try {
                 // when
                 events.forEach(event -> context.publishEvent(new ChatRealtimeAfterCommitEvent(event)));
+                threadEvents.forEach(event -> context.publishEvent(new CommunityThreadRealtimeAfterCommitEvent(event)));
                 then(executor).shouldHaveNoInteractions();
                 TransactionSynchronizationUtils.triggerAfterCompletion(committed
                     ? TransactionSynchronization.STATUS_COMMITTED : TransactionSynchronization.STATUS_ROLLED_BACK);
@@ -81,13 +99,17 @@ class CommunityChatMessageAfterCommitListenerTest {
                 then(relayUseCase).shouldHaveNoInteractions();
                 if (committed) {
                     ArgumentCaptor<Runnable> task = ArgumentCaptor.forClass(Runnable.class);
-                    then(executor).should(times(events.size())).execute(task.capture());
+                    then(executor).should(times(events.size() + threadEvents.size())).execute(task.capture());
                     task.getAllValues().forEach(Runnable::run);
                     then(relayUseCase).should().relay(messageCreated);
                     then(relayUseCase).should().relay(messageUpdated);
                     then(relayUseCase).should().relay(messageDeleted);
                     then(relayUseCase).should().relay(reactionChanged);
                     then(relayUseCase).should().relay(readUpdated);
+                    then(relayUseCase).should().relay(threadUpdated);
+                    then(relayUseCase).should().relay(threadDeleted);
+                    then(relayUseCase).should().relay(memberKicked);
+                    then(relayUseCase).should().relay(memberLeft);
                 } else {
                     then(executor).shouldHaveNoInteractions();
                 }

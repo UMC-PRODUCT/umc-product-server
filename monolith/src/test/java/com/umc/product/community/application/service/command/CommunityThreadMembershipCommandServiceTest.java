@@ -34,6 +34,7 @@ import com.umc.product.community.application.port.in.command.thread.dto.KickComm
 import com.umc.product.community.application.port.in.command.thread.dto.ThreadActorCommand;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadMemberPort;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadPort;
+import com.umc.product.community.application.port.out.thread.PublishCommunityThreadRealtimePort;
 import com.umc.product.community.application.port.out.thread.SaveCommunityThreadMemberPort;
 import com.umc.product.community.domain.CommunityThread;
 import com.umc.product.community.domain.CommunityThreadMember;
@@ -61,6 +62,8 @@ class CommunityThreadMembershipCommandServiceTest {
     LeaveChatRoomUseCase leaveChatRoomUseCase;
     @Mock
     DomainEventPublisher eventPublisher;
+    @Mock
+    PublishCommunityThreadRealtimePort publishRealtimePort;
 
     CommunityThreadMembershipCommandService sut;
 
@@ -73,6 +76,7 @@ class CommunityThreadMembershipCommandServiceTest {
             inviteManager,
             leaveChatRoomUseCase,
             eventPublisher,
+            publishRealtimePort,
             Clock.fixed(NOW, ZoneOffset.UTC)
         );
     }
@@ -164,7 +168,7 @@ class CommunityThreadMembershipCommandServiceTest {
             loadMemberPort,
             leaveChatRoomUseCase,
             saveMemberPort,
-            eventPublisher
+            publishRealtimePort
         );
         order.verify(loadThreadPort).findByIdForUpdate(THREAD_ID);
         order.verify(loadMemberPort).findByThreadIdAndMemberId(THREAD_ID, OWNER_ID);
@@ -172,7 +176,7 @@ class CommunityThreadMembershipCommandServiceTest {
         order.verify(loadMemberPort).listByThreadId(THREAD_ID);
         order.verify(leaveChatRoomUseCase).leaveChatRoom(LeaveChatRoomCommand.kicked(100L, 20L));
         order.verify(saveMemberPort).save(target);
-        order.verify(eventPublisher).publish(any(CommunityThreadMemberKickedEvent.class));
+        order.verify(publishRealtimePort).publishAfterCommit(any(CommunityThreadMemberKickedEvent.class));
     }
 
     @Test
@@ -290,7 +294,7 @@ class CommunityThreadMembershipCommandServiceTest {
 
         // then
         then(leaveChatRoomUseCase).should().leaveChatRoom(LeaveChatRoomCommand.left(100L, 20L));
-        then(eventPublisher).should().publish(eventCaptor.capture());
+        then(publishRealtimePort).should().publishAfterCommit(eventCaptor.capture());
         assertThat(eventCaptor.getValue().membershipJoinedAt()).isEqualTo(NOW);
         assertThat(eventCaptor.getValue().occurredAt()).isEqualTo(NOW);
     }
@@ -329,6 +333,7 @@ class CommunityThreadMembershipCommandServiceTest {
         assertThat(owner.getRole()).isEqualTo(CommunityThreadMemberRole.ADMIN);
         then(saveMemberPort).should().transferOwnership(THREAD_ID, OWNER_ID, 20L);
         then(eventPublisher).shouldHaveNoInteractions();
+        then(publishRealtimePort).shouldHaveNoInteractions();
         then(leaveChatRoomUseCase).shouldHaveNoInteractions();
     }
 

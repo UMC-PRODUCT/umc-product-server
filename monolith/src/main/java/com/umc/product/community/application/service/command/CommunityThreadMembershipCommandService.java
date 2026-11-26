@@ -22,6 +22,7 @@ import com.umc.product.community.application.port.in.command.thread.dto.KickComm
 import com.umc.product.community.application.port.in.command.thread.dto.ThreadActorCommand;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadMemberPort;
 import com.umc.product.community.application.port.out.thread.LoadCommunityThreadPort;
+import com.umc.product.community.application.port.out.thread.PublishCommunityThreadRealtimePort;
 import com.umc.product.community.application.port.out.thread.SaveCommunityThreadMemberPort;
 import com.umc.product.community.domain.CommunityThread;
 import com.umc.product.community.domain.CommunityThreadMember;
@@ -51,6 +52,7 @@ public class CommunityThreadMembershipCommandService implements
     private final CommunityThreadInviteManager inviteManager;
     private final LeaveChatRoomUseCase leaveChatRoomUseCase;
     private final DomainEventPublisher eventPublisher;
+    private final PublishCommunityThreadRealtimePort publishRealtimePort;
     private final Clock clock;
 
     @Override
@@ -97,7 +99,7 @@ public class CommunityThreadMembershipCommandService implements
         Instant kickedAt = clock.instant();
         target.kick(kickedAt);
         saveMemberPort.save(target);
-        eventPublisher.publish(CommunityThreadMemberKickedEvent.of(
+        publishRealtimePort.publishAfterCommit(CommunityThreadMemberKickedEvent.of(
             thread.getId(),
             actor.getMemberId(),
             target.getMemberId(),
@@ -132,7 +134,7 @@ public class CommunityThreadMembershipCommandService implements
         Instant leftAt = clock.instant();
         actor.leave(leftAt);
         saveMemberPort.save(actor);
-        eventPublisher.publish(CommunityThreadMemberLeftEvent.of(
+        publishRealtimePort.publishAfterCommit(CommunityThreadMemberLeftEvent.of(
             thread.getId(),
             actor.getMemberId(),
             activeMemberIds,

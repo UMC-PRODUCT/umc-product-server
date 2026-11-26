@@ -10,6 +10,7 @@ import com.umc.product.chat.application.port.in.command.dto.LeaveChatRoomCommand
 import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+import com.umc.product.chat.application.port.out.PublishChatRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
 import com.umc.product.chat.domain.ChatMember;
@@ -17,7 +18,6 @@ import com.umc.product.chat.domain.ChatMessage;
 import com.umc.product.chat.domain.event.ChatMessageCreatedEvent;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
-import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,7 +31,7 @@ public class ChatMemberCommandService implements JoinChatRoomUseCase, LeaveChatR
     private final LoadChatMessagePort loadChatMessagePort;
     private final SaveChatMemberPort saveChatMemberPort;
     private final SaveChatMessagePort saveChatMessagePort;
-    private final DomainEventPublisher domainEventPublisher;
+    private final PublishChatRealtimePort publishChatRealtimePort;
 
     @Override
     public void joinChatRoom(JoinChatRoomCommand command) {
@@ -75,7 +75,7 @@ public class ChatMemberCommandService implements JoinChatRoomUseCase, LeaveChatR
                 command.memberId(),
                 command.exitMessageType()
             ));
-            domainEventPublisher.publish(ChatMessageCreatedEvent.from(exitMessage));
+            publishChatRealtimePort.publishAfterCommit(ChatMessageCreatedEvent.from(exitMessage));
         }
     }
 }

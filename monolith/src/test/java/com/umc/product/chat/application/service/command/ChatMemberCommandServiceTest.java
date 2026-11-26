@@ -22,6 +22,7 @@ import com.umc.product.chat.application.port.in.command.dto.LeaveChatRoomCommand
 import com.umc.product.chat.application.port.out.LoadChatMemberPort;
 import com.umc.product.chat.application.port.out.LoadChatMessagePort;
 import com.umc.product.chat.application.port.out.LoadChatRoomPort;
+import com.umc.product.chat.application.port.out.PublishChatRealtimePort;
 import com.umc.product.chat.application.port.out.SaveChatMemberPort;
 import com.umc.product.chat.application.port.out.SaveChatMessagePort;
 import com.umc.product.chat.domain.ChatMember;
@@ -30,7 +31,6 @@ import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.chat.domain.event.ChatMessageCreatedEvent;
 import com.umc.product.chat.domain.exception.ChatDomainException;
 import com.umc.product.chat.domain.exception.ChatErrorCode;
-import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChatMemberCommandService")
@@ -47,7 +47,7 @@ class ChatMemberCommandServiceTest {
     @Mock
     SaveChatMessagePort saveChatMessagePort;
     @Mock
-    DomainEventPublisher domainEventPublisher;
+    PublishChatRealtimePort publishChatRealtimePort;
 
     @InjectMocks
     ChatMemberCommandService sut;
@@ -149,7 +149,7 @@ class ChatMemberCommandServiceTest {
             .isEqualTo(ChatErrorCode.CHAT_MEMBER_ALREADY_EXISTS);
 
         then(loadChatRoomPort).should().getById(1L);
-        then(domainEventPublisher).shouldHaveNoInteractions();
+        then(publishChatRealtimePort).shouldHaveNoInteractions();
     }
 
     @Test
@@ -162,7 +162,7 @@ class ChatMemberCommandServiceTest {
         then(loadChatRoomPort).should().getByIdForUpdate(1L);
         then(saveChatMemberPort).should().delete(1L, 10L);
         then(saveChatMessagePort).shouldHaveNoInteractions();
-        then(domainEventPublisher).shouldHaveNoInteractions();
+        then(publishChatRealtimePort).shouldHaveNoInteractions();
     }
 
     @Test
@@ -177,10 +177,10 @@ class ChatMemberCommandServiceTest {
         ArgumentCaptor<ChatMessage> messageCaptor = ArgumentCaptor.forClass(ChatMessage.class);
         ArgumentCaptor<ChatMessageCreatedEvent> eventCaptor =
             ArgumentCaptor.forClass(ChatMessageCreatedEvent.class);
-        InOrder order = Mockito.inOrder(saveChatMemberPort, saveChatMessagePort, domainEventPublisher);
+        InOrder order = Mockito.inOrder(saveChatMemberPort, saveChatMessagePort, publishChatRealtimePort);
         order.verify(saveChatMemberPort).delete(1L, 10L);
         order.verify(saveChatMessagePort).save(messageCaptor.capture());
-        order.verify(domainEventPublisher).publish(eventCaptor.capture());
+        order.verify(publishChatRealtimePort).publishAfterCommit(eventCaptor.capture());
         assertThat(messageCaptor.getValue().getRoomId()).isEqualTo(1L);
         assertThat(messageCaptor.getValue().getSenderMemberId()).isEqualTo(10L);
         assertThat(messageCaptor.getValue().getContentType()).isEqualTo(MessageContentType.MEMBER_KICKED);
@@ -200,7 +200,7 @@ class ChatMemberCommandServiceTest {
             .isEqualTo(ChatErrorCode.CHAT_MEMBER_NOT_FOUND);
 
         then(saveChatMessagePort).shouldHaveNoInteractions();
-        then(domainEventPublisher).shouldHaveNoInteractions();
+        then(publishChatRealtimePort).shouldHaveNoInteractions();
     }
 
     @Test
