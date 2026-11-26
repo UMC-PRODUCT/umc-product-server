@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
+import com.umc.product.chat.domain.MessageContentType;
 import com.umc.product.community.application.port.in.command.thread.dto.CommunityThreadMemberLifecycleInfo;
 import com.umc.product.community.application.port.in.command.thread.dto.ThreadActorCommand;
 import com.umc.product.community.application.port.in.query.thread.message.dto.CommunityThreadMessageMutationInfo;
@@ -30,7 +31,7 @@ class CommunityThreadSendLeaveConcurrencyIntegrationTest
     extends CommunityThreadConcurrencyIntegrationSupport {
 
     @Test
-    @DisplayName("leave commit 뒤 send는 거절되고 퇴장 기록 외에 unread와 message-created event를 남기지 않는다")
+    @DisplayName("퇴장 커밋 후 동시 전송 요청은 거절되고 퇴장 이벤트만 실시간으로 전파된다")
     void sendWaitingForLeave_doesNotLeakUnreadOrMessageEvent() throws Exception {
         ThreadContext thread = createThread();
         createThreadMessageUseCase.create(communityText(
@@ -68,6 +69,7 @@ class CommunityThreadSendLeaveConcurrencyIntegrationTest
         try {
             race.awaitPostgreSqlLockWait(send);
             assertThat(send.future().isDone()).isFalse();
+            then(realtimeExecutor).should(times(1)).execute(any(Runnable.class));
         } finally {
             allowLeaveCommit.countDown();
         }
@@ -83,11 +85,17 @@ class CommunityThreadSendLeaveConcurrencyIntegrationTest
             .isEqualTo(CommunityErrorCode.THREAD_ACCESS_DENIED);
         // leave가 남기는 MEMBER_LEFT 퇴장 기록 1건만 추가된다.
         assertThat(chatMessageRepository.count()).isEqualTo(messagesBefore + 1L);
-        assertThat(eventOutboxRepository.count()).isEqualTo(outboxesBefore + 2L);
-        assertThat(countEvent("chat.message.created")).isEqualTo(chatEventsBefore + 1L);
+        assertThat(chatMessageRepository.findAll()).anySatisfy(message -> {
+            assertThat(message.getRoomId()).isEqualTo(thread.roomId());
+            assertThat(message.getSenderMemberId()).isEqualTo(MEMBER_ID);
+            assertThat(message.getContentType()).isEqualTo(MessageContentType.MEMBER_LEFT);
+        });
+        assertThat(eventOutboxRepository.count()).isEqualTo(outboxesBefore);
+        assertThat(countEvent("chat.message.created")).isEqualTo(chatEventsBefore);
         assertThat(countEvent("community.thread.message.created")).isEqualTo(communityEventsBefore);
-        assertThat(countEvent("community.thread.member.left")).isEqualTo(leaveEventsBefore + 1L);
-        then(realtimeExecutor).should(times(1)).execute(any(Runnable.class));
+        assertThat(countEvent("community.thread.member.left")).isEqualTo(leaveEventsBefore);
+        // 기존 메시지 전파 1건에 퇴장 이벤트와 시스템 메시지 전파 작업이 각각 추가된다.
+        then(realtimeExecutor).should(times(3)).execute(any(Runnable.class));
         assertThat(threadMember(thread.threadId(), OWNER_ID).getUnreadCount()).isZero();
         assertThat(threadMember(thread.threadId(), MEMBER_ID).getUnreadCount()).isEqualTo(1L);
         assertThat(threadMember(thread.threadId(), MEMBER_ID).getState())
