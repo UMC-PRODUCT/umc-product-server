@@ -41,7 +41,10 @@ public interface NoticeQueryApi {
             - SCHOOL_CORE -> 학교회장단 공지
             - SCHOOL_PART_LEADER -> 파트장 공지
 
-            자기 role보다 상위 tab 요청시 오류 (403)
+            `challengerRoleId`를 지정하면 본인에게 부여된 활성 기수의 해당 직책을 기준으로 조회합니다.
+            직책 ID를 생략하면 기존 계정 기준으로 조회합니다. 다른 회원의 직책이나 만료된 직책은 403을 반환합니다.
+            직책을 지정한 경우 총괄·부총괄은 다른 기수도 조회할 수 있으며, 그 외 직책은 해당 기수만 조회할 수 있습니다.
+            조회 직책보다 상위 운영진 탭을 요청하면 403을 반환합니다.
 
 
             ### 조회 범위
@@ -98,6 +101,9 @@ public interface NoticeQueryApi {
     PageResponse<GetNoticeSummaryResponse> getAllNotices(
         @ParameterObject @Valid NoticeClassification classification,
 
+        @Parameter(description = "선택한 직책 ID. GET /api/v2/member/me의 challengerRoles[].id")
+        @RequestParam(required = false) Long challengerRoleId,
+
         @Parameter(description = "페이징 정보. page=페이지 번호(0부터), size=페이지 크기, sort=정렬 기준(기본: createdAt,DESC)")
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
         Pageable pageable,
@@ -111,7 +117,7 @@ public interface NoticeQueryApi {
         description = """
             키워드로 공지사항을 검색합니다. 제목과 내용에서 검색합니다.
 
-            **targetNoticeTab 필드 및 필터 조건은 전체 조회와 동일하게 적용됩니다.**
+            `noticeTab`, `challengerRoleId` 및 조직·파트 필터는 전체 조회와 동일하게 적용됩니다.
 
             'UMC 전체' 조회 범위와 `author`의 활성 기수 최상위 역할·소속 표시도 목록 조회와 동일합니다.
 
@@ -149,6 +155,9 @@ public interface NoticeQueryApi {
         @RequestParam String keyword,
 
         @ParameterObject @Valid NoticeClassification classification,
+
+        @Parameter(description = "선택한 직책 ID. GET /api/v2/member/me의 challengerRoles[].id")
+        @RequestParam(required = false) Long challengerRoleId,
 
         @Parameter(description = "페이징 정보. page=페이지 번호(0부터), size=페이지 크기")
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)

@@ -55,12 +55,13 @@ public class NoticeQueryController implements NoticeQueryApi {
     @GetMapping
     public PageResponse<GetNoticeSummaryResponse> getAllNotices(
         @ParameterObject @Valid NoticeClassification classification,
+        @RequestParam(required = false) Long challengerRoleId,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
         @ParameterObject Pageable pageable,
         @CurrentMember MemberPrincipal memberPrincipal) {
 
         NoticeViewerInfo viewerInfo = noticeViewerInfoAssembler.toMemberIdAndGisuId(memberPrincipal.getMemberId(),
-            classification.gisuId());
+            classification.gisuId(), challengerRoleId);
         Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(viewerInfo, classification, pageable);
 
         return PageResponse.of(notices, GetNoticeSummaryResponse::from);
@@ -73,13 +74,14 @@ public class NoticeQueryController implements NoticeQueryApi {
     public PageResponse<GetNoticeSummaryResponse> searchNotices(
         @RequestParam String keyword,
         @ParameterObject @Valid NoticeClassification classification,
+        @RequestParam(required = false) Long challengerRoleId,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
         @ParameterObject
         Pageable pageable,
         @CurrentMember MemberPrincipal memberPrincipal) {
 
         NoticeViewerInfo viewerInfo = noticeViewerInfoAssembler.toMemberIdAndGisuId(memberPrincipal.getMemberId(),
-            classification.gisuId());
+            classification.gisuId(), challengerRoleId);
         Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(keyword, viewerInfo, classification,
             pageable);
 

@@ -17,7 +17,11 @@ import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.domain.enums.NoticeTab;
+import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,16 +38,47 @@ public class NoticeViewerInfoAssembler {
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChapterUseCase getChapterUseCase;
+    private final GetGisuUseCase getGisuUseCase;
 
-    public NoticeViewerInfo toMemberIdAndGisuId(Long memberId, Long gisuId) {
-        Set<ChallengerPart> memberParts = resolveParts(memberId, gisuId);
-        boolean superAdmin = getChallengerRoleUseCase.isSuperAdmin(memberId);
-        ChallengerRoleInfo role = superAdmin ? null : resolveRole(memberId, gisuId);
-        NoticeTab viewerRole = resolveViewerRole(superAdmin, role);
+    public NoticeViewerInfo toMemberIdAndGisuId(Long memberId, Long gisuId, Long challengerRoleId) {
+        if (challengerRoleId == null) {
+            boolean superAdmin = getChallengerRoleUseCase.isSuperAdmin(memberId);
+            ChallengerRoleInfo role = superAdmin ? null : resolveRole(memberId, gisuId);
+            return buildViewerInfo(gisuId, role, superAdmin, getMemberSchoolId(memberId),
+                resolveParts(memberId, gisuId));
+        }
+        ChallengerRoleInfo role = getSelectedRole(memberId, gisuId, challengerRoleId);
+        Long schoolId = switch (role.organizationType()) {
+            case SCHOOL -> role.organizationId();
+            case CHAPTER -> null;
+            // 중앙 운영진이 파트만 지정하면 프로필 소속 지부·학교를 사용하는 기존 필터를 유지한다.
+            case CENTRAL -> getMemberSchoolId(memberId);
+        };
+        Set<ChallengerPart> parts = role.responsiblePart() == null ? Set.of() : Set.of(role.responsiblePart());
+        return buildViewerInfo(gisuId, role, false, schoolId, parts);
+    }
 
+    private ChallengerRoleInfo getSelectedRole(Long memberId, Long gisuId, Long challengerRoleId) {
+        Long activeGisuId = getGisuUseCase.findActiveGisu().map(GisuInfo::gisuId)
+            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION));
+        ChallengerRoleInfo role = getChallengerRoleUseCase.listByMemberIdAndGisuId(memberId, activeGisuId).stream()
+            .filter(candidate -> challengerRoleId.equals(candidate.id()))
+            .findFirst()
+            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION));
+        if (!activeGisuId.equals(gisuId) && !role.roleType().isAtLeastCentralCore()) {
+            throw new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION);
+        }
+        return role;
+    }
+
+    private Long getMemberSchoolId(Long memberId) {
         MemberInfo memberInfo = getMemberUseCase.findAllByIds(Set.of(memberId)).get(memberId);
-        Long schoolId = memberInfo != null ? memberInfo.schoolId() : null;
+        return memberInfo != null ? memberInfo.schoolId() : null;
+    }
 
+    private NoticeViewerInfo buildViewerInfo(Long gisuId, ChallengerRoleInfo role, boolean superAdmin, Long schoolId,
+                                            Set<ChallengerPart> memberParts) {
+        NoticeTab viewerRole = resolveViewerRole(superAdmin, role);
         Long chapterId = null;
         if (schoolId != null) {
             try {
