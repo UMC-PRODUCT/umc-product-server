@@ -51,4 +51,13 @@ class MaintenanceDomainTest {
         assertThat(MaintenanceDomain.fromUri("/api/v1/posts/1"))
             .contains(MaintenanceDomain.COMMUNITY);
     }
+
+    @Test
+    @DisplayName("문의 사용자·운영진 URI 모두 INQUIRY 로 매칭")
+    void inquiry_매칭() {
+        assertThat(MaintenanceDomain.fromUri("/api/v1/inquiries/1/messages"))
+            .contains(MaintenanceDomain.INQUIRY);
+        assertThat(MaintenanceDomain.fromUri("/api/v1/inquiries/admin/1/close"))
+            .contains(MaintenanceDomain.INQUIRY);
+    }
 }

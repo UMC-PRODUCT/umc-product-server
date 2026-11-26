@@ -13,6 +13,10 @@ public final class RelayDestinationCodec {
         "/queue/community/threads/events-user";
     private static final String BROKER_COMMUNITY_USER_QUEUE =
         "/queue/community.threads.events-user";
+    private static final String PUBLIC_INQUIRY_USER_QUEUE = "/queue/inquiries/events-user";
+    private static final String BROKER_INQUIRY_USER_QUEUE = "/queue/inquiries.events-user";
+    private static final String PUBLIC_INQUIRY_RANKING_TOPIC = "/topic/inquiries/ranking";
+    private static final String BROKER_INQUIRY_RANKING_TOPIC = "/topic/inquiries.ranking";
 
     public String toBroker(String destination) {
         if (PUBLIC_USER_DESTINATION.equals(destination)) {
@@ -21,12 +25,18 @@ public final class RelayDestinationCodec {
         if (PUBLIC_USER_REGISTRY.equals(destination)) {
             return BROKER_USER_REGISTRY;
         }
-        if (hasSessionSuffix(destination, PUBLIC_COMMUNITY_USER_QUEUE)) {
+        if (PUBLIC_INQUIRY_RANKING_TOPIC.equals(destination)) {
+            return BROKER_INQUIRY_RANKING_TOPIC;
+        }
+        if (hasSuffix(destination, PUBLIC_COMMUNITY_USER_QUEUE)) {
             return replacePrefix(
                 destination,
                 PUBLIC_COMMUNITY_USER_QUEUE,
                 BROKER_COMMUNITY_USER_QUEUE
             );
+        }
+        if (hasSuffix(destination, PUBLIC_INQUIRY_USER_QUEUE)) {
+            return replacePrefix(destination, PUBLIC_INQUIRY_USER_QUEUE, BROKER_INQUIRY_USER_QUEUE);
         }
         return destination;
     }
@@ -38,17 +48,23 @@ public final class RelayDestinationCodec {
         if (BROKER_USER_REGISTRY.equals(destination)) {
             return PUBLIC_USER_REGISTRY;
         }
-        if (hasSessionSuffix(destination, BROKER_COMMUNITY_USER_QUEUE)) {
+        if (BROKER_INQUIRY_RANKING_TOPIC.equals(destination)) {
+            return PUBLIC_INQUIRY_RANKING_TOPIC;
+        }
+        if (hasSuffix(destination, BROKER_COMMUNITY_USER_QUEUE)) {
             return replacePrefix(
                 destination,
                 BROKER_COMMUNITY_USER_QUEUE,
                 PUBLIC_COMMUNITY_USER_QUEUE
             );
         }
+        if (hasSuffix(destination, BROKER_INQUIRY_USER_QUEUE)) {
+            return replacePrefix(destination, BROKER_INQUIRY_USER_QUEUE, PUBLIC_INQUIRY_USER_QUEUE);
+        }
         return destination;
     }
 
-    private boolean hasSessionSuffix(String destination, String prefix) {
+    private boolean hasSuffix(String destination, String prefix) {
         return destination != null && destination.startsWith(prefix)
             && destination.length() > prefix.length();
     }

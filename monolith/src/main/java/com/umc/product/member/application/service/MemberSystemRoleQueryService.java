@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.umc.product.member.application.port.in.query.ListMemberSystemRoleUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberSystemRoleInfo;
 import com.umc.product.member.application.port.out.LoadMemberSystemRolePort;
+import com.umc.product.member.domain.MemberSystemRole;
+import com.umc.product.member.domain.MemberSystemRoleType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +27,13 @@ public class MemberSystemRoleQueryService implements ListMemberSystemRoleUseCase
         }
         return loadMemberSystemRolePort.listByMemberId(memberId).stream()
             .map(MemberSystemRoleInfo::from)
+            .toList();
+    }
+
+    @Override
+    public List<Long> listUmcProductMemberIds() {
+        return loadMemberSystemRolePort.listByRoleType(MemberSystemRoleType.UMC_PRODUCT).stream()
+            .map(MemberSystemRole::getMemberId)
             .toList();
     }
 }
