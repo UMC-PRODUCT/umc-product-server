@@ -55,6 +55,7 @@ public class MemberQueryV2Controller {
               - 보유 운영진 RoleType 목록
               - 휴지기에는 `currentGisuMemberInfo = null`
             - `challengerHistory` : 모든 기수의 챌린저 이력 (최신 기수 우선). 기수별 상벌점 포함.
+            - `challengerRoles` : 활성 기수의 운영진 직책 목록. 공지 목록·검색에서 선택한 직책의 `id`를 `challengerRoleId`로 전달할 수 있습니다.
             """
     )
     @GetMapping("me")
