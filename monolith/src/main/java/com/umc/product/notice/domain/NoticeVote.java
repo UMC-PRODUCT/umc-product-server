@@ -1,9 +1,12 @@
 package com.umc.product.notice.domain;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.notice.domain.enums.VoteStatus;
+import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -82,5 +85,19 @@ public class NoticeVote extends BaseEntity {
             return VoteStatus.CLOSED;
         }
         return VoteStatus.OPEN;
+    }
+
+    public boolean close(Instant now) {
+        VoteStatus status = getOpenStatus(now);
+        if (status == VoteStatus.NOT_STARTED) {
+            throw new NoticeDomainException(NoticeErrorCode.VOTE_NOT_STARTED);
+        }
+        if (status == VoteStatus.CLOSED) {
+            return false;
+        }
+
+        // DB 저장 시 마이크로초 반올림으로 종료 시각이 미래가 되지 않도록 합니다.
+        endsAtExclusive = now.truncatedTo(ChronoUnit.MICROS);
+        return true;
     }
 }

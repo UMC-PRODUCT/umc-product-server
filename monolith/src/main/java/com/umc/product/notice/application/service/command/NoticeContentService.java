@@ -1,6 +1,7 @@
 package com.umc.product.notice.application.service.command;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -147,6 +148,20 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
         manageVoteUseCase.deleteVote(vote.getVoteId());
         saveNoticePort.updateUpdatedAt(noticeId, clock.instant());
+    }
+
+    @Override
+    public void closeVote(Long noticeId, Long memberId) {
+        findEditableNotice(noticeId, memberId);
+
+        NoticeVote vote = loadNoticeVotePort.findVoteByNoticeIdForUpdate(noticeId)
+            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
+
+        Instant now = clock.instant();
+        if (vote.close(now)) {
+            saveNoticeVotePort.saveVote(vote);
+            saveNoticePort.updateUpdatedAt(noticeId, now);
+        }
     }
 
     @Override

@@ -6,4 +6,7 @@ package com.umc.product.member.application.port.in.command;
 public interface LockMemberUseCase {
 
     void lockById(Long memberId);
+
+    /** 이미 삭제된 회원에게는 잠금을 적용하지 않는다. */
+    void lockByIdIfExists(Long memberId);
 }

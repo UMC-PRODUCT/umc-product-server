@@ -113,4 +113,21 @@ public interface NoticeContentApi {
         @CurrentMember MemberPrincipal memberPrincipal
     );
 
+    @Operation(
+        operationId = "NOTICE-107",
+        summary = "공지사항 투표 조기 종료",
+        description = "진행 중인 공지 투표를 즉시 종료합니다. 요청 본문은 필요하지 않습니다. "
+            + "공지 작성자 또는 SUPER_ADMIN만 사용할 수 있으며, 권한이 없으면 403(NOTICE-0008)을 반환합니다. "
+            + "공지 또는 투표가 없으면 404, 시작 전이면 400(NOTICE-CONTENTS-0011)을 반환합니다. "
+            + "이미 종료된 투표는 변경 없이 성공 처리합니다. "
+            + "투표와 기존 응답·결과는 유지하며 endsAtExclusive를 실제 종료 시각으로 앞당깁니다. "
+            + "종료 이후 투표 제출·수정·취소는 400(NOTICE-CONTENTS-0012)으로 거부됩니다. "
+            + "성공 후 공지 상세(NOTICE-003)를 다시 조회하면 vote.status가 CLOSED로 반환됩니다."
+    )
+    void closeNoticeVote(
+        @Parameter(description = "공지사항 ID", required = true, example = "1")
+        @PathVariable Long noticeId,
+        @CurrentMember MemberPrincipal memberPrincipal
+    );
+
 }

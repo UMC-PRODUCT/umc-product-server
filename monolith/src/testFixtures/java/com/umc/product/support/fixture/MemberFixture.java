@@ -4,16 +4,21 @@ import static com.umc.product.support.CommonFixture.MONKEY;
 
 import org.springframework.stereotype.Component;
 
+import com.umc.product.member.adapter.out.persistence.MemberSystemRoleJpaRepository;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.MemberSystemRole;
+import com.umc.product.member.domain.MemberSystemRoleType;
 
 @Component
 public class MemberFixture extends FixtureSupport {
 
     private final SaveMemberPort saveMemberPort;
+    private final MemberSystemRoleJpaRepository memberSystemRoleJpaRepository;
 
-    public MemberFixture(SaveMemberPort saveMemberPort) {
+    public MemberFixture(SaveMemberPort saveMemberPort, MemberSystemRoleJpaRepository memberSystemRoleJpaRepository) {
         this.saveMemberPort = saveMemberPort;
+        this.memberSystemRoleJpaRepository = memberSystemRoleJpaRepository;
     }
 
     public Member 일반(String name) {
@@ -30,5 +35,9 @@ public class MemberFixture extends FixtureSupport {
 
     public Member 일반() {
         return 일반(fixtureString("member", 10));
+    }
+
+    public void 시스템_역할_부여(Long memberId, MemberSystemRoleType roleType) {
+        memberSystemRoleJpaRepository.save(MemberSystemRole.create(memberId, roleType));
     }
 }

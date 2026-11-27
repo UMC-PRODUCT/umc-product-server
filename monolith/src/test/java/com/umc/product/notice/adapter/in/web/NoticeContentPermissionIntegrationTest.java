@@ -3,6 +3,7 @@ package com.umc.product.notice.adapter.in.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -125,6 +127,27 @@ class NoticeContentPermissionIntegrationTest extends IntegrationTestSupport {
     @AfterEach
     void clearAuthorityCache() {
         evictAuthoritySnapshotCacheUseCase.evictByMemberIds(memberIds);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @DisplayName("공지 상세는 게시 당시 알림 발송 설정과 필독 여부를 각각 반환한다")
+    void 공지_상세에서_게시_알림_설정_조회(boolean shouldNotify) throws Exception {
+        // Given
+        Notice notice = saveNoticePort.save(Notice.create("제목", "내용", authorMemberId, shouldNotify, !shouldNotify));
+        saveNoticeTargetPort.save(NoticeTarget.builder()
+            .noticeId(notice.getId())
+            .targetGisuId(9L)
+            .targetChallengerPart(List.of())
+            .targetNoticeTab(NoticeTab.CHALLENGER)
+            .build());
+
+        // When / Then
+        mockMvc.perform(get("/api/v1/notices/{noticeId}", notice.getId())
+                .header("Authorization", "Bearer super-admin-token"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.shouldNotify").value(shouldNotify))
+            .andExpect(jsonPath("$.result.mustRead").value(!shouldNotify));
     }
 
     @ParameterizedTest
