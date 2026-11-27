@@ -3,6 +3,7 @@ package com.umc.product.member.application.port.in.query.dto;
 import java.util.List;
 import java.util.Map;
 
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
@@ -24,6 +25,15 @@ public record MemberSummaryV2Info(
     CurrentGisuMembership currentGisuMembership,
     List<ChallengerHistoryItem> challengerHistory
 ) {
+
+    public List<ChallengerRoleInfo> challengerRoles() {
+        if (currentGisuMembership == null) {
+            return List.of();
+        }
+        return member.roles().stream()
+            .filter(role -> currentGisuMembership.gisuId().equals(role.gisuId()))
+            .toList();
+    }
 
     /**
      * 현재 활성 기수에 한정된 멤버십 스냅샷.

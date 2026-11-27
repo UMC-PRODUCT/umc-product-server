@@ -2,6 +2,7 @@ package com.umc.product.member.adapter.in.web.v2.dto.response;
 
 import java.util.List;
 
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
@@ -44,7 +45,9 @@ public record MemberSummaryV2Response(
     @Schema(description = "현재 활성 기수에 대한 챌린저 정보", nullable = true)
     CurrentGisuMemberInfo currentGisuMemberInfo,
     @Schema(description = "모든 챌린저 기록 (최신 기수 우선)")
-    List<ChallengerHistoryV2> challengerHistory
+    List<ChallengerHistoryV2> challengerHistory,
+    @Schema(description = "현재 활성 기수의 운영진 직책 목록. 휴지기이거나 보유한 직책이 없으면 빈 배열")
+    List<ChallengerRoleInfo> challengerRoles
 ) {
 
     public static MemberSummaryV2Response from(MemberSummaryV2Info info) {
@@ -66,7 +69,8 @@ public record MemberSummaryV2Response(
             p,
             info.totalActivityDays(),
             info.currentGisuMembership() == null ? null : CurrentGisuMemberInfo.from(info.currentGisuMembership()),
-            info.challengerHistory().stream().map(ChallengerHistoryV2::from).toList()
+            info.challengerHistory().stream().map(ChallengerHistoryV2::from).toList(),
+            info.challengerRoles()
         );
     }
 

@@ -103,6 +103,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             notice.getContent(),
             notice.getAuthorMemberId(),
             notice.isMustRead(),
+            notice.isShouldSendNotification(),
             voteInfo,
             imageInfos,
             linkInfos,

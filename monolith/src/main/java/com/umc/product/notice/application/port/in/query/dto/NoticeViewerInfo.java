@@ -7,13 +7,9 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.notice.domain.enums.NoticeTab;
 
 /**
- * 공지를 조회하는 멤버의 소속 컨텍스트.
- * <p>
- * 역할: 인증된 사용자가 "누구인가"를 표현합니다. NoticeViewerInfoAssembler가 auth 컨텍스트로부터 조립하며, 쿼리 레이어에서 챌린저 공지의 파트/지부/학교 필터링과 운영진 공지의 접근
- * 가능 여부 판별에 사용됩니다.
- * <p>
- * - memberParts: 본인 소속 파트 + 파트장으로 담당하는 파트 합산 - viewerRole: 조회자가 가진 최상위 운영진 역할. null이면 운영진 역할 없음. 레벨이 낮을수록 상위 직급
- * (CENTRAL_MEMBER=1 > SCHOOL_CORE=2 > SCHOOL_PART_LEADER=3).
+ * 공지 목록·검색에 적용할 조회자의 역할과 소속.
+ * 직책을 선택한 경우 그 직책의 역할·소속·담당 파트를 사용합니다.
+ * 직책을 생략하면 기존 계정의 최상위 역할과 본인의 수강·담당 파트를 사용합니다.
  */
 public record NoticeViewerInfo(
     Set<ChallengerPart> memberParts,
