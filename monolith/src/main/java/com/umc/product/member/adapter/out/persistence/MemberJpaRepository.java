@@ -10,9 +10,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.domain.Member;
 
 public interface MemberJpaRepository extends JpaRepository<Member, Long> {
+    List<Member> findTop2BySchoolIdAndNameAndNicknameAndStatusNot(
+        Long schoolId, String name, String nickname, MemberStatus excludedStatus);
+
     Optional<Member> findByEmail(String email);
 
     Optional<Member> findByNickname(String nickname);
