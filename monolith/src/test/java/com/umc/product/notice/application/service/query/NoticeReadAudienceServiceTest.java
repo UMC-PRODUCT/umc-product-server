@@ -81,9 +81,11 @@ class NoticeReadAudienceServiceTest {
     private void givenGlobalNotice() {
         given(loadNoticeTargetPort.findByNoticeId(20L)).willReturn(Optional.of(NoticeTarget.builder()
             .noticeId(20L).targetNoticeTab(NoticeTab.CHALLENGER).build()));
-        given(getChallengerUseCase.listBasicByGisuOrMemberIds(null, Set.of())).willReturn(List.of(
+        List<ChallengerBasicInfo> history = List.of(
             new ChallengerBasicInfo(102L, 1L, 2L, ChallengerPart.PLAN, false, ChallengerStatus.ACTIVE),
-            new ChallengerBasicInfo(101L, 1L, 1L, ChallengerPart.DESIGN, false, ChallengerStatus.GRADUATED)));
+            new ChallengerBasicInfo(101L, 1L, 1L, ChallengerPart.DESIGN, false, ChallengerStatus.GRADUATED));
+        given(getChallengerUseCase.getHistoriesForActiveOrGraduatedMembers(null, Set.of()))
+            .willReturn(Map.of(1L, history));
         given(getMemberUseCase.findAllBasicByIds(Set.of(1L))).willReturn(
             Map.of(1L, new MemberBasicInfo(1L, "회원", "닉네임", null, MemberStatus.ACTIVE)));
     }

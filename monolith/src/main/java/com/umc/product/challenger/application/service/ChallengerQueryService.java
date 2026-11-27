@@ -1,5 +1,7 @@
 package com.umc.product.challenger.application.service;
 
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -262,9 +264,21 @@ public class ChallengerQueryService implements GetChallengerUseCase, CheckChalle
     }
 
     @Override
-    public List<ChallengerBasicInfo> listBasicByGisuOrMemberIds(Long gisuId, Set<Long> memberIds) {
-        return loadChallengerPort.listByGisuOrMemberIds(gisuId, memberIds).stream()
-            .map(ChallengerBasicInfo::from).toList();
+    public Map<Long, List<ChallengerBasicInfo>> getHistoriesForActiveOrGraduatedMembers(
+        Long gisuId, Set<Long> additionalMemberIds
+    ) {
+        Map<Long, List<Challenger>> histories = loadChallengerPort.listByGisuOrMemberIds(gisuId, additionalMemberIds)
+            .stream().collect(Collectors.groupingBy(Challenger::getMemberId));
+        Map<Long, List<ChallengerBasicInfo>> result = new HashMap<>();
+        histories.forEach((memberId, history) -> {
+            Challenger membership = history.stream().filter(c -> c.getGisuId().equals(gisuId)).findFirst()
+                .orElseGet(() -> history.stream().max(Comparator.comparing(Challenger::getCreatedAt)).orElseThrow());
+            ChallengerStatus status = membership.getStatus();
+            if (status == ChallengerStatus.ACTIVE || status == ChallengerStatus.GRADUATED) {
+                result.put(memberId, history.stream().map(ChallengerBasicInfo::from).toList());
+            }
+        });
+        return result;
     }
 
     @Override

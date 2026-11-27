@@ -77,10 +77,9 @@ public class NoticeReadAudienceService {
         // 다른 기수의 총괄단이나 시스템 관리자도 기수 공지를 열람할 수 있다.
         Set<Long> staffMemberIds = new HashSet<>(roles.keySet());
         staffMemberIds.addAll(admins);
-        List<ChallengerBasicInfo> challengers = getChallengerUseCase
-            .listBasicByGisuOrMemberIds(target.targetGisuId(), staffMemberIds);
-        Map<Long, List<ChallengerBasicInfo>> byMember = challengers.stream()
-            .collect(Collectors.groupingBy(ChallengerBasicInfo::memberId));
+        Map<Long, List<ChallengerBasicInfo>> byMember = getChallengerUseCase
+            .getHistoriesForActiveOrGraduatedMembers(target.targetGisuId(), staffMemberIds);
+        List<ChallengerBasicInfo> challengers = byMember.values().stream().flatMap(List::stream).toList();
         Map<Long, MemberBasicInfo> members = getMemberUseCase.findAllBasicByIds(byMember.keySet());
         Map<Long, Map<Long, ChapterInfo>> chapters = loadChapters(target, challengers, members);
         Map<Long, Long> readIds = readIdsByMember(noticeId, challengers);

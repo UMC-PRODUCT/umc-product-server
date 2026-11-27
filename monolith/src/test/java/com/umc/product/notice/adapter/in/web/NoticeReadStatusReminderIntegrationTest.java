@@ -21,6 +21,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,6 +32,7 @@ import com.umc.product.authorization.application.port.in.command.EvictAuthorityS
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.maintenance.application.port.in.command.RefreshMaintenanceStateUseCase;
 import com.umc.product.member.adapter.out.persistence.MemberSystemRoleJpaRepository;
 import com.umc.product.member.application.port.out.SaveMemberPort;
@@ -41,7 +44,10 @@ import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.enums.NoticeTab;
+import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
+import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.Gisu;
+import com.umc.product.organization.domain.School;
 import com.umc.product.support.IntegrationTestSupport;
 import com.umc.product.support.fixture.ChallengerFixture;
 import com.umc.product.support.fixture.ChallengerRoleFixture;
@@ -55,6 +61,7 @@ class NoticeReadStatusReminderIntegrationTest extends IntegrationTestSupport {
     @Autowired private GisuFixture gisuFixture;
     @Autowired private ChapterFixture chapterFixture;
     @Autowired private SchoolFixture schoolFixture;
+    @Autowired private SaveChapterSchoolPort saveChapterSchoolPort;
     @Autowired private ChallengerFixture challengerFixture;
     @Autowired private ChallengerRoleFixture roleFixture;
     @Autowired private SaveChallengerPort saveChallengerPort;
@@ -68,6 +75,7 @@ class NoticeReadStatusReminderIntegrationTest extends IntegrationTestSupport {
 
     private final List<Long> memberIds = new ArrayList<>();
     private Gisu gisu;
+    private School school;
     private Long schoolId;
     private Challenger author;
 
@@ -75,7 +83,8 @@ class NoticeReadStatusReminderIntegrationTest extends IntegrationTestSupport {
     void setUp() {
         maintenance.refresh();
         gisu = gisuFixture.비활성_기수(9701L);
-        schoolId = schoolFixture.지부에_소속된_학교(chapterFixture.지부(gisu)).getId();
+        school = schoolFixture.지부에_소속된_학교(chapterFixture.지부(gisu));
+        schoolId = school.getId();
         author = challenger("author", schoolId, gisu, ChallengerPart.DESIGN);
         roleFixture.학교_회장(author.getId(), schoolId, gisu.getId());
     }
@@ -134,6 +143,65 @@ class NoticeReadStatusReminderIntegrationTest extends IntegrationTestSupport {
         remindAll(noticeId, "author").andExpect(status().isOk());
         assertThat(queuedRecipientIds()).containsExactlyInAnyOrder(
             unread.getMemberId(), unread.getMemberId(), author.getMemberId());
+    }
+
+    @Test
+    void 대상_기수에서_탈부하거나_제명된_회원은_수신_현황과_재알림에서_제외한다() throws Exception {
+        Gisu other = gisuWithSchool(9700L);
+        Challenger authorHistory = challengerFixture.웹(author.getMemberId(), other.getId());
+        authorHistory.changeStatus(ChallengerStatus.WITHDRAWN, author.getMemberId(), "이전 기수 탈부");
+        saveChallengerPort.save(authorHistory);
+
+        Challenger withdrawn = challenger("withdrawn", schoolId, gisu, ChallengerPart.DESIGN);
+        roleFixture.학교_부회장(withdrawn.getId(), schoolId, gisu.getId());
+        challengerFixture.웹(withdrawn.getMemberId(), other.getId());
+        withdrawn.changeStatus(ChallengerStatus.WITHDRAWN, author.getMemberId(), "탈부");
+        saveChallengerPort.save(withdrawn);
+        Challenger expelled = challenger("expelled", schoolId, gisu, ChallengerPart.DESIGN);
+        expelled.changeStatus(ChallengerStatus.EXPELLED, author.getMemberId(), "제명");
+        saveChallengerPort.save(expelled);
+        Long noticeId = notice(NoticeTab.CHALLENGER);
+
+        mockMvc.perform(get("/api/v1/notices/{id}/read-statics", noticeId).header("Authorization", "Bearer author"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.totalCount").value(1))
+            .andExpect(jsonPath("$.result.unreadCount").value(1));
+        list(noticeId, "UNREAD").andExpect(jsonPath("$.result.content.length()").value(1))
+            .andExpect(jsonPath("$.result.content[0].challengerId").value(author.getId()));
+        remind(noticeId, "author", withdrawn.getId(), expelled.getId()).andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("NOTICE-0015"));
+        remindAll(noticeId, "author").andExpect(status().isOk());
+        assertThat(queuedRecipientIds()).containsExactly(author.getMemberId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void 대상_기수_이력이_없으면_가장_나중에_생성한_이력으로_읽음과_재알림_대상을_정한다(boolean allGisus) throws Exception {
+        Gisu higher = gisuWithSchool(9700L);
+        Gisu lower = gisuWithSchool(9699L);
+        Challenger president = challenger("president", schoolId, higher, ChallengerPart.DESIGN);
+        Challenger vice = challenger("vice", schoolId, higher, ChallengerPart.DESIGN);
+        roleFixture.중앙운영사무국_총괄(president.getId(), higher.getId());
+        roleFixture.중앙운영사무국_부총괄(vice.getId(), higher.getId());
+
+        Challenger expelled = challengerFixture.웹(president.getMemberId(), lower.getId());
+        expelled.changeStatus(ChallengerStatus.EXPELLED, author.getMemberId(), "제명");
+        saveChallengerPort.save(expelled);
+        Challenger graduated = challengerFixture.웹(vice.getMemberId(), lower.getId());
+        graduated.changeStatus(ChallengerStatus.GRADUATED, author.getMemberId(), "수료");
+        saveChallengerPort.save(graduated);
+        Long noticeId = notice(NoticeTab.CHALLENGER, allGisus ? null : gisu.getId());
+
+        remindAll(noticeId, "author").andExpect(status().isOk());
+        // 다른 기수의 총괄단은 공지를 열람할 수 있지만 해당 기수만 지정한 재알림의 게시 대상에서는 빠진다.
+        List<Long> recipients = allGisus
+            ? List.of(author.getMemberId(), vice.getMemberId()) : List.of(author.getMemberId());
+        assertThat(queuedRecipientIds()).containsExactlyInAnyOrderElementsOf(recipients);
+        read(noticeId, "president").andExpect(status().isBadRequest());
+        read(noticeId, "vice").andExpect(status().isOk());
+        list(noticeId, "READ").andExpect(jsonPath("$.result.content.length()").value(1));
+        list(noticeId, "UNREAD").andExpect(jsonPath("$.result.content.length()").value(1))
+            .andExpect(jsonPath("$.result.content[0].challengerId").value(author.getId()));
     }
 
     @Test
@@ -218,6 +286,12 @@ class NoticeReadStatusReminderIntegrationTest extends IntegrationTestSupport {
             .isEqualTo(1L);
     }
 
+    private Gisu gisuWithSchool(long generation) {
+        Gisu other = gisuFixture.비활성_기수(generation);
+        saveChapterSchoolPort.save(ChapterSchool.create(chapterFixture.지부(other), school));
+        return other;
+    }
+
     private Challenger challenger(String name, Long school, Gisu generation, ChallengerPart part) {
         Long id = member(name, school);
         return part == null ? challengerFixture.수강_없는_소속(id, generation.getId())
@@ -235,8 +309,12 @@ class NoticeReadStatusReminderIntegrationTest extends IntegrationTestSupport {
     }
 
     private Long notice(NoticeTab tab) {
+        return notice(tab, gisu.getId());
+    }
+
+    private Long notice(NoticeTab tab, Long targetGisuId) {
         Long id = saveNoticePort.save(Notice.create("공지", "본문", author.getMemberId(), false, false)).getId();
-        saveTargetPort.save(NoticeTarget.builder().noticeId(id).targetGisuId(gisu.getId()).targetSchoolId(schoolId)
+        saveTargetPort.save(NoticeTarget.builder().noticeId(id).targetGisuId(targetGisuId).targetSchoolId(schoolId)
             .targetChallengerPart(tab == NoticeTab.SCHOOL_CORE ? List.of() : List.of(ChallengerPart.DESIGN))
             .targetNoticeTab(tab).build());
         return id;
