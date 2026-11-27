@@ -448,6 +448,6 @@ class MembershipOnlyChallengerAccessIntegrationTest extends IntegrationTestSuppo
 
     private FcmNotificationRequestedEvent pushEvent(Long targetChapterId, Set<ChallengerPart> targetParts) {
         return new FcmNotificationRequestedEvent(null, null, null, learner.getId(), List.of(),
-            gisu.getId(), targetChapterId, null, targetParts, "제목", "본문", null, null, null);
+            gisu.getId(), targetChapterId, null, targetParts, "제목", "본문", null, null, null, false);
     }
 }

@@ -14,6 +14,8 @@ public interface LoadMemberPort {
 
     Optional<Member> findByIdForUpdate(Long id);
 
+    List<Long> listIdsForShare(Set<Long> memberIds);
+
     Optional<Member> findByEmail(String email);
 
     Optional<Member> findByNickname(String nickname);

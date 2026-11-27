@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.event.domain.DomainEvent;
 import com.umc.product.notification.application.port.in.dto.RequestFcmNotificationCommand;
@@ -25,7 +26,8 @@ public record FcmNotificationRequestedEvent(
     String body,
     Map<String, String> data,
     String imageUrl,
-    String deepLink
+    String deepLink,
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT) boolean recordHistory
 ) implements DomainEvent {
 
     public FcmNotificationRequestedEvent {
@@ -62,7 +64,8 @@ public record FcmNotificationRequestedEvent(
             command.body(),
             command.data(),
             command.imageUrl(),
-            command.deepLink()
+            command.deepLink(),
+            command.recordHistory()
         );
     }
 

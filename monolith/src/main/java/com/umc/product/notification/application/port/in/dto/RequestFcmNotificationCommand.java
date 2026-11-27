@@ -21,7 +21,8 @@ public record RequestFcmNotificationCommand(
     String body,
     Map<String, String> data,
     String imageUrl,
-    String deepLink
+    String deepLink,
+    boolean recordHistory
 ) {
 
     public RequestFcmNotificationCommand {

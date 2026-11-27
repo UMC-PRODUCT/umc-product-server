@@ -32,6 +32,7 @@ import com.umc.product.member.application.port.out.WithdrawnMemberIdentityPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.MemberRejoinKey;
 import com.umc.product.member.domain.WithdrawnMemberIdentity;
+import com.umc.product.notification.application.port.in.command.DeleteNotificationHistoryUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.term.application.port.in.command.ManageTermAgreementUseCase;
@@ -74,6 +75,9 @@ class MemberServiceAuthorityCacheTest {
     DeleteMemberBlocksUseCase deleteMemberBlocksUseCase;
 
     @Mock
+    DeleteNotificationHistoryUseCase deleteNotificationHistoryUseCase;
+
+    @Mock
     MemberNicknameRetentionService nicknameRetentionService;
 
     @Mock
@@ -95,6 +99,7 @@ class MemberServiceAuthorityCacheTest {
         verify(saveMemberPort).delete(member);
         verify(evictAuthoritySnapshotCacheUseCase).evictByMemberId(MEMBER_ID);
         verify(deleteMemberBlocksUseCase).deleteAllInvolving(MEMBER_ID);
+        verify(deleteNotificationHistoryUseCase).deleteByRecipientMemberId(MEMBER_ID);
         verifyNoInteractions(withdrawnMemberIdentityPort);
     }
 

@@ -46,6 +46,11 @@ public class MemberPersistenceAdapter implements
     }
 
     @Override
+    public List<Long> listIdsForShare(Set<Long> memberIds) {
+        return memberJpaRepository.findAllIdsForShare(memberIds);
+    }
+
+    @Override
     public Optional<Member> findByEmail(String email) {
         return memberJpaRepository.findByEmail(email);
     }

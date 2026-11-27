@@ -1,6 +1,7 @@
 package com.umc.product.notification.adapter.in.web;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -55,7 +56,7 @@ class FcmAdminControllerTest {
     }
 
     @Test
-    @DisplayName("관리자 FCM 알림 발송 요청은 202와 requestId를 반환한다")
+    @DisplayName("기존 관리자 FCM 요청의 응답과 푸시 payload를 유지한다")
     void 관리자_FCM_알림_발송_요청() throws Exception {
         UUID requestId = UUID.randomUUID();
         Instant queuedAt = Instant.parse("2026-06-20T00:00:00Z");
@@ -84,7 +85,15 @@ class FcmAdminControllerTest {
             .andExpect(status().isAccepted())
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.result.requestId").value(requestId.toString()))
-            .andExpect(jsonPath("$.result.queuedAt").value("2026-06-20T00:00:00Z"));
+            .andExpect(jsonPath("$.result.queuedAt").value("2026-06-20T00:00:00Z"))
+            .andExpect(jsonPath("$.result.recordHistory").doesNotExist())
+            .andExpect(jsonPath("$.result.notificationType").doesNotExist());
+
+        then(requestFcmNotificationUseCase).should().request(argThat(command ->
+            "1".equals(command.data().get("noticeId"))
+                && "umc://notices/1".equals(command.deepLink())
+                && !command.recordHistory()
+        ));
     }
 
     @Test

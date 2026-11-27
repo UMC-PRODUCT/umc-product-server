@@ -8,9 +8,11 @@ import org.springframework.stereotype.Component;
 
 import com.umc.product.global.config.FcmProperties;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
+import com.umc.product.notification.application.port.in.command.RecordNotificationHistoryUseCase;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.application.service.FcmAudienceResolver;
 import com.umc.product.notification.domain.FcmToken;
+import com.umc.product.notification.domain.NotificationHistory;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +28,12 @@ public class FcmNotificationRequestedEventListener {
     private final FcmAudienceResolver fcmAudienceResolver;
     private final LoadFcmPort loadFcmPort;
     private final DomainEventPublisher eventPublisher;
+    private final RecordNotificationHistoryUseCase recordNotificationHistoryUseCase;
 
     @EventListener
     public void handle(FcmNotificationRequestedEvent event) {
-        if (!fcmProperties.enabled()) {
+        boolean fcmEnabled = fcmProperties.enabled();
+        if (!fcmEnabled && !event.recordHistory()) {
             log.info("[FCM 비활성화] FCM 알림 요청 이벤트를 건너뜁니다: requestId={}", event.requestId());
             return;
         }
@@ -37,6 +41,18 @@ public class FcmNotificationRequestedEventListener {
         List<Long> memberIds = fcmAudienceResolver.resolve(event);
         if (memberIds.isEmpty()) {
             log.info("FCM 알림 발송 대상 없음: requestId={}", event.requestId());
+            return;
+        }
+
+        if (event.recordHistory()) {
+            recordNotificationHistoryUseCase.recordHistory(
+                new NotificationHistory(
+                    event.requestId(), event.title(), event.body(), event.imageUrl(), event.deepLink(), event.occurredAt()
+                ),
+                memberIds
+            );
+        }
+        if (!fcmEnabled) {
             return;
         }
 
