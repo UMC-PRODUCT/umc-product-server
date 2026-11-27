@@ -24,9 +24,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.MemberStatus;
+import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
@@ -100,6 +103,35 @@ class MemberQueryV2ControllerTest {
     }
 
     @Test
+    @DisplayName("내 정보에 활성 기수의 겸임 직책 ID와 소속을 반환한다")
+    void 내_정보에_활성_기수의_겸임_직책_ID와_소속을_반환한다() throws Exception {
+        var chapterRole = new ChallengerRoleInfo(101L, 201L, ChallengerRoleType.CHAPTER_PRESIDENT,
+            OrganizationType.CHAPTER, 31L, null, 11L, 10L);
+        var schoolRole = new ChallengerRoleInfo(102L, 201L, ChallengerRoleType.SCHOOL_PRESIDENT,
+            OrganizationType.SCHOOL, 41L, null, 11L, 10L);
+        var pastRole = new ChallengerRoleInfo(100L, 200L, ChallengerRoleType.SCHOOL_PART_LEADER,
+            OrganizationType.SCHOOL, 41L, ChallengerPart.SPRINGBOOT, 9L, 8L);
+        var membership = new MemberSummaryV2Info.CurrentGisuMembership(11L, 10L, null, true,
+            List.of(chapterRole.roleType(), schoolRole.roleType()));
+        given(getMemberSummaryV2UseCase.getSummaryByMemberId(99L)).willReturn(new MemberSummaryV2Info(
+            MemberInfo.builder().id(99L).roles(List.of(pastRole, chapterRole, schoolRole)).build(),
+            MemberProfileInfo.builder().build(), false, false, false, 0L, membership, List.of()
+        ));
+
+        mockMvc.perform(get("/api/v2/member/me"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.result.challengerRoles.length()").value(2))
+            .andExpect(jsonPath("$.result.challengerRoles[0].id").value("101"))
+            .andExpect(jsonPath("$.result.challengerRoles[0].organizationType").value("CHAPTER"))
+            .andExpect(jsonPath("$.result.challengerRoles[0].organizationId").value("31"))
+            .andExpect(jsonPath("$.result.challengerRoles[1].id").value("102"))
+            .andExpect(jsonPath("$.result.challengerRoles[1].roleType").value("SCHOOL_PRESIDENT"))
+            .andExpect(jsonPath("$.result.challengerRoles[1].organizationId").value("41"))
+            .andExpect(jsonPath("$.result.challengerRoles[1].gisuId").value("11"))
+            .andExpect(jsonPath("$.result.currentGisuMemberInfo.roleTypes.length()").value(2));
+    }
+
+    @Test
     @DisplayName("일반 사용자의 본인 정보에는 isSuperAdmin과 isUmcProduct를 false로 반환한다")
     void 일반_사용자의_본인_정보에는_isSuperAdmin과_isUmcProduct를_false로_반환한다() throws Exception {
         given(getMemberSummaryV2UseCase.getSummaryByMemberId(99L)).willReturn(new MemberSummaryV2Info(
@@ -124,7 +156,9 @@ class MemberQueryV2ControllerTest {
         mockMvc.perform(get("/api/v2/member/me"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result.isSuperAdmin").value(false))
-            .andExpect(jsonPath("$.result.isUmcProduct").value(false));
+            .andExpect(jsonPath("$.result.isUmcProduct").value(false))
+            .andExpect(jsonPath("$.result.challengerRoles").isArray())
+            .andExpect(jsonPath("$.result.challengerRoles").isEmpty());
     }
 
     @Test
