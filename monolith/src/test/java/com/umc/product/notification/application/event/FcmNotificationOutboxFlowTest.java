@@ -1,7 +1,10 @@
 package com.umc.product.notification.application.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -45,6 +48,7 @@ import com.umc.product.notification.application.port.out.SaveFcmPort;
 import com.umc.product.notification.application.port.out.dto.FcmSendResult;
 import com.umc.product.notification.application.service.FcmAudienceResolver;
 import com.umc.product.notification.application.service.FcmNotificationCommandService;
+import com.umc.product.notification.application.service.NotificationHistoryCommandService;
 import com.umc.product.notification.domain.FcmToken;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -54,8 +58,39 @@ import io.micrometer.tracing.Tracer;
 class FcmNotificationOutboxFlowTest {
 
     @Test
+    @DisplayName("기존 FCM outbox JSON을 읽어 수신자와 푸시 내용을 유지한다")
+    void 기존_FCM_요청_역직렬화() throws Exception {
+        // given
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        FcmNotificationRequestedEvent event = FcmNotificationRequestedEvent.from(
+            UUID.randomUUID(), Instant.parse("2026-11-27T00:00:00Z"),
+            RequestFcmNotificationCommand.builder().title("공지").body("본문").memberIds(List.of(1L))
+                .data(Map.of("noticeId", "42")).deepLink("umc://notice/42").build()
+        );
+        EventOutbox row = EventOutbox.record(event, """
+            {
+              "eventId": "%s",
+              "occurredAt": "2026-11-27T00:00:00Z",
+              "requestId": "%s",
+              "memberIds": [1],
+              "title": "공지",
+              "body": "본문",
+              "data": {"noticeId": "42"},
+              "deepLink": "umc://notice/42"
+            }
+            """.formatted(event.eventId(), event.requestId()));
+
+        // when
+        var restored = (FcmNotificationRequestedEvent) new EventPayloadDeserializer(mapper).deserialize(row);
+
+        // then
+        assertThat(restored).isEqualTo(event);
+    }
+
+    @Test
     @DisplayName("FCM 요청 이벤트는 event_outbox에 저장되고 relay 후 배치 이벤트도 event_outbox에 저장된다")
     void fcm_request_event_outbox_relay_flow() {
+        String imageUrl = "https://example.com/image.png";
         ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
         EventPayloadSerializer serializer = new EventPayloadSerializer(objectMapper);
         RecordingSaveEventOutboxPort requestOutboxPort = new RecordingSaveEventOutboxPort();
@@ -69,22 +104,26 @@ class FcmNotificationOutboxFlowTest {
             .memberIds(List.of(1L, 2L))
             .title("공지")
             .body("본문")
+            .imageUrl(imageUrl)
             .build());
 
         assertThat(requestOutboxPort.saved).hasSize(1);
         EventOutbox requestOutbox = requestOutboxPort.saved.getFirst();
         assertThat(requestOutbox.getEventType()).isEqualTo("notification.fcm.requested");
         assertThat(requestOutbox.getEventClass()).isEqualTo(FcmNotificationRequestedEvent.class.getName());
-        assertThat(requestOutbox.getPayload()).contains("\"memberIds\":[1,2]");
+        assertThat(requestOutbox.getPayload())
+            .contains("\"memberIds\":[1,2]").doesNotContain("notificationType");
 
         RecordingSaveEventOutboxPort batchOutboxPort = new RecordingSaveEventOutboxPort();
+        NotificationHistoryCommandService historyService = mock(NotificationHistoryCommandService.class);
         FcmNotificationRequestedEventListener listener = new FcmNotificationRequestedEventListener(
             new FcmProperties(true, true),
             new FcmAudienceResolver(null, null, null),
             new FakeLoadFcmPort(createTokens(501)),
             new OutboxDomainEventPublisher(
                 batchOutboxPort, serializer, Tracer.NOOP, mock(OutboxCommitSignalPublisher.class)
-            )
+            ),
+            historyService
         );
         AtomicBoolean transactionActiveDuringListener = new AtomicBoolean(false);
         ApplicationEventPublisher springPublisher = event -> {
@@ -111,6 +150,9 @@ class FcmNotificationOutboxFlowTest {
         );
 
         assertThat(transactionActiveDuringListener).isTrue();
+        verify(historyService).save(
+            argThat(event -> "공지".equals(event.title())), eq(List.of(1L, 2L))
+        );
         assertThat(requestOutbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
         assertThat(batchOutboxPort.saved)
             .hasSize(2)
@@ -120,7 +162,8 @@ class FcmNotificationOutboxFlowTest {
             .extracting(EventOutbox::getEventClass)
             .containsOnly(FcmSendBatchRequestedEvent.class.getName());
         assertThat(batchOutboxPort.saved.getFirst().getPayload()).contains("\"tokenIds\":[1,2");
-        assertThat(batchOutboxPort.saved.get(1).getPayload()).contains("\"tokenIds\":[501]");
+        assertThat(batchOutboxPort.saved.get(1).getPayload())
+            .contains("\"tokenIds\":[501]", "\"imageUrl\":\"" + imageUrl + "\"");
     }
 
     @Test

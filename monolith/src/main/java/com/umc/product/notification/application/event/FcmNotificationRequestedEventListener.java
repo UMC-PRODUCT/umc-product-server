@@ -10,6 +10,7 @@ import com.umc.product.global.config.FcmProperties;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.application.service.FcmAudienceResolver;
+import com.umc.product.notification.application.service.NotificationHistoryCommandService;
 import com.umc.product.notification.domain.FcmToken;
 
 import lombok.RequiredArgsConstructor;
@@ -26,17 +27,18 @@ public class FcmNotificationRequestedEventListener {
     private final FcmAudienceResolver fcmAudienceResolver;
     private final LoadFcmPort loadFcmPort;
     private final DomainEventPublisher eventPublisher;
+    private final NotificationHistoryCommandService notificationHistoryCommandService;
 
     @EventListener
     public void handle(FcmNotificationRequestedEvent event) {
-        if (!fcmProperties.enabled()) {
-            log.info("[FCM 비활성화] FCM 알림 요청 이벤트를 건너뜁니다: requestId={}", event.requestId());
-            return;
-        }
-
         List<Long> memberIds = fcmAudienceResolver.resolve(event);
         if (memberIds.isEmpty()) {
             log.info("FCM 알림 발송 대상 없음: requestId={}", event.requestId());
+            return;
+        }
+
+        notificationHistoryCommandService.save(event, memberIds);
+        if (!fcmProperties.enabled()) {
             return;
         }
 

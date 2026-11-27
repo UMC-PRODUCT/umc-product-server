@@ -1,23 +1,31 @@
 package com.umc.product.notification.application.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InOrder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.umc.product.global.config.FcmProperties;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.event.domain.DomainEvent;
+import com.umc.product.notification.application.port.in.dto.RequestFcmNotificationCommand;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.application.service.FcmAudienceResolver;
+import com.umc.product.notification.application.service.NotificationHistoryCommandService;
 import com.umc.product.notification.domain.FcmToken;
 
 @DisplayName("FCM 알림 요청 이벤트 리스너")
@@ -29,33 +37,21 @@ class FcmNotificationRequestedEventListenerTest {
         // given
         FakeLoadFcmPort loadFcmPort = new FakeLoadFcmPort(createTokens(501));
         FakeDomainEventPublisher eventPublisher = new FakeDomainEventPublisher();
+        NotificationHistoryCommandService historyService = mock(NotificationHistoryCommandService.class);
         FcmNotificationRequestedEventListener listener = new FcmNotificationRequestedEventListener(
             new FcmProperties(true, true),
             new FcmAudienceResolver(null, null, null),
             loadFcmPort,
-            eventPublisher
+            eventPublisher,
+            historyService
         );
-        FcmNotificationRequestedEvent event = new FcmNotificationRequestedEvent(
-            null,
-            null,
-            UUID.randomUUID(),
-            null,
-            List.of(1L, 2L),
-            null,
-            null,
-            null,
-            null,
-            "제목",
-            "본문",
-            null,
-            null,
-            null
-        );
+        FcmNotificationRequestedEvent event = requestEvent();
 
         // when
         listener.handle(event);
 
         // then
+        verify(historyService).save(event, event.memberIds());
         assertThat(eventPublisher.published).hasSize(2);
         assertThat((FcmSendBatchRequestedEvent) eventPublisher.published.get(0))
             .extracting(batch -> batch.tokenIds().size())
@@ -63,6 +59,46 @@ class FcmNotificationRequestedEventListenerTest {
         assertThat((FcmSendBatchRequestedEvent) eventPublisher.published.get(1))
             .extracting(batch -> batch.tokenIds().size())
             .isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @DisplayName("활성 토큰이 없거나 FCM이 비활성화되어도 대상 회원의 알림을 저장한다")
+    void 발송할_토큰이_없어도_알림_이력_저장(boolean fcmEnabled) {
+        // given
+        LoadFcmPort loadFcmPort = mock(LoadFcmPort.class);
+        NotificationHistoryCommandService historyService = mock(NotificationHistoryCommandService.class);
+        FakeDomainEventPublisher eventPublisher = new FakeDomainEventPublisher();
+        FcmNotificationRequestedEventListener listener = new FcmNotificationRequestedEventListener(
+            new FcmProperties(fcmEnabled, true), new FcmAudienceResolver(null, null, null),
+            loadFcmPort, eventPublisher, historyService
+        );
+        FcmNotificationRequestedEvent event = requestEvent();
+        if (fcmEnabled) {
+            given(loadFcmPort.listActiveByMemberIds(event.memberIds())).willReturn(List.of());
+        }
+
+        // when
+        listener.handle(event);
+
+        // then
+        InOrder order = inOrder(historyService, loadFcmPort);
+        order.verify(historyService).save(event, event.memberIds());
+        if (fcmEnabled) {
+            order.verify(loadFcmPort).listActiveByMemberIds(event.memberIds());
+        }
+        order.verifyNoMoreInteractions();
+        assertThat(eventPublisher.published).isEmpty();
+    }
+
+    private FcmNotificationRequestedEvent requestEvent() {
+        return FcmNotificationRequestedEvent.from(null, Instant.parse("2026-11-27T00:00:00Z"),
+            RequestFcmNotificationCommand.builder()
+                .memberIds(List.of(1L, 2L))
+                .title("제목")
+                .body("본문")
+                .build()
+        );
     }
 
     private List<FcmToken> createTokens(int count) {
