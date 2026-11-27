@@ -17,7 +17,7 @@
 | LLM | 4 | 15 | [llm.md](llm.md) |
 | Maintenance | 8 | 47 | [maintenance.md](maintenance.md) |
 | Member | 21 | 103 | [member.md](member.md) |
-| Notification | 3 | 10 | [notification.md](notification.md) |
+| Notification | 9 | 30 | [notification.md](notification.md) |
 | Organization | 25 | 148 | [organization.md](organization.md) |
 | Project | 37 | 529 | [project.md](project.md) |
 | Recruiting | 78 | 346 | [recruiting.md](recruiting.md) |
@@ -27,7 +27,7 @@
 | Term | 8 | 23 | [term.md](term.md) |
 | Test Seed | 27 | 95 | [test.md](test.md) |
 
-- 문서화된 20개 도메인 행 합계: 테스트 파일 285개, 테스트 케이스 1,725개
+- 문서화된 20개 도메인 행 합계: 테스트 파일 291개, 테스트 케이스 1,745개
 - 최신 전체 실행 합계: Task 12 격리 JUnit XML snapshot 기준 446 suites, 2,172 tests, failures 0, errors 0, skipped 40
 
 ## 참고: 테스트 케이스가 아닌 문서
