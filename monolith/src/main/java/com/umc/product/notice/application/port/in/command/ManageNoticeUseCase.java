@@ -36,10 +36,13 @@ public interface ManageNoticeUseCase {
      */
     void deleteNotice(DeleteNoticeCommand command);
 
-    /*
-     * 공지사항 리마인드 알림 보내기
+    /**
+     * 선택한 챌린저 중 공지 대상에 해당하는 미확인자에게 재알림을 보낸다.
      */
     void remindNotice(SendNoticeReminderCommand command);
+
+    /** 챌린저 공지의 현재 대상 중 미확인자 전원에게 한국 날짜 기준 공지당 하루 한 번 재알림을 보낸다. */
+    void remindAllUnread(Long noticeId, Long memberId);
 
     /*
      * 공지 조회수 증가

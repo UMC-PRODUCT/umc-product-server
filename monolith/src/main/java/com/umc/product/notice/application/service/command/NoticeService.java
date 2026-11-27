@@ -1,9 +1,13 @@
 package com.umc.product.notice.application.service.command;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -12,8 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourcePermission;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
@@ -22,12 +29,14 @@ import com.umc.product.notice.application.port.in.command.dto.CreateNoticeComman
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
+import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.ManageNoticeTargetPort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
 import com.umc.product.notice.application.service.query.NoticeAudienceResolver;
+import com.umc.product.notice.application.service.query.NoticeReadAudienceService;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.NoticeTargetInfo;
@@ -47,6 +56,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class NoticeService implements ManageNoticeUseCase {
 
+    private static final ZoneId REMINDER_ZONE = ZoneId.of("Asia/Seoul");
+
     // TODO: 기획단과 PREFIX 협의 후에 수정해야 합니다.
     private static final String NOTICE_REMINDER_TITLE_PREFIX = "[⏰ 공지사항 리마인드] ";
     private static final String NOTICE_TITLE_PREFIX = "[\uD83D\uDCE2 새로운 공지사항] "; // loudspeaker emoji
@@ -64,11 +75,14 @@ public class NoticeService implements ManageNoticeUseCase {
 
     // 도메인 외부 UseCase
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
-    private final GetChallengerUseCase getChallengerUseCase;
+    private final CheckPermissionUseCase checkPermissionUseCase;
+    private final GetNoticeTargetUseCase getNoticeTargetUseCase;
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
     private final RequestFcmNotificationUseCase requestFcmNotificationUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final NoticeAudienceResolver noticeAudienceResolver;
+    private final NoticeReadAudienceService noticeReadAudienceService;
+    private final Clock clock;
 
     @Override
     public List<Long> createNoticeBulk(List<CreateNoticeCommand> commands) {
@@ -181,24 +195,58 @@ public class NoticeService implements ManageNoticeUseCase {
         action = AuditAction.REMIND,
         targetType = "Notice",
         targetId = "#command.noticeId()",
-        description = "'공지사항 리마인드를 발송했습니다.'"
+        description = "'공지사항 재알림 발송을 요청했습니다.'"
     )
     @Override
     public void remindNotice(SendNoticeReminderCommand command) {
-        Notice notice = findNoticeById(command.noticeId());
+        sendReminder(command.noticeId(), command.memberId(), Optional.of(new HashSet<>(command.targetIds())));
+    }
+
+    @Audited(
+        domain = Domain.NOTICE,
+        action = AuditAction.REMIND,
+        targetType = "Notice",
+        targetId = "#noticeId",
+        description = "'공지사항 전체 재알림 발송을 요청했습니다.'"
+    )
+    @Override
+    public void remindAllUnread(Long noticeId, Long memberId) {
+        sendReminder(noticeId, memberId, Optional.empty());
+    }
+
+    private void sendReminder(Long noticeId, Long memberId, Optional<Set<Long>> selectedChallengerIds) {
+        Notice notice = findNoticeById(noticeId);
+        checkPermissionUseCase.checkOrThrow(memberId,
+            ResourcePermission.of(ResourceType.NOTICE, notice.getId(), PermissionType.EDIT));
+        NoticeTargetInfo target = getNoticeTargetUseCase.findByNoticeId(notice.getId());
+        if (target.isStaffNotice()) {
+            throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_STATUS_FOR_REMINDER);
+        }
+
+        // 관리 권한으로 열람할 수 있어도 공지의 게시 대상에 해당할 때만 재알림을 받는다.
+        Set<Long> recipientIds = new HashSet<>(noticeAudienceResolver.resolve(target));
+        List<Long> unreadMemberIds = selectedChallengerIds
+            .map(ids -> noticeReadAudienceService.listUnreadRecipientMemberIds(noticeId, ids))
+            .orElseGet(() -> noticeReadAudienceService.listAllUnreadRecipientMemberIds(noticeId));
+        List<Long> memberIds = unreadMemberIds.stream()
+            .filter(recipientIds::contains)
+            .toList();
+        if (memberIds.isEmpty()) {
+            throw new NoticeDomainException(NoticeErrorCode.NO_UNREAD_REMINDER_TARGET);
+        }
+
+        if (selectedChallengerIds.isEmpty()) {
+            LocalDate today = LocalDate.ofInstant(clock.instant(), REMINDER_ZONE);
+            if (!saveNoticePort.tryReserveReminder(notice.getId(), today)) {
+                throw new NoticeDomainException(NoticeErrorCode.REMINDER_DAILY_LIMIT_REACHED);
+            }
+        }
 
         String alarmTitle = NOTICE_REMINDER_TITLE_PREFIX + notice.getTitle();
         String alarmBody = StringUtils.abbreviate(REMINDER_BODY_SUFFIX + notice.getContent(), 40);
-
-        // challengerId → memberId 일괄 변환 (쿼리 1회)
-        Set<Long> challengerIdSet = new HashSet<>(command.targetIds());
-        List<Long> memberIds = getChallengerUseCase.getAllByIds(challengerIdSet).stream()
-            .map(info -> info.memberId())
-            .toList();
-
         requestFcmNotificationUseCase.request(
             RequestFcmNotificationCommand.builder()
-                .requesterMemberId(command.memberId())
+                .requesterMemberId(memberId)
                 .memberIds(memberIds)
                 .title(alarmTitle)
                 .body(alarmBody)

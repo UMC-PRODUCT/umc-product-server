@@ -101,6 +101,14 @@ public class NoticeCommandController implements NoticeCommandControllerApi {
         manageNoticeUseCase.remindNotice(request.toCommand(memberId, noticeId));
     }
 
+    @PostMapping("/{noticeId}/reminders/all")
+    public void remindAllUnread(
+        @PathVariable Long noticeId,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        manageNoticeUseCase.remindAllUnread(noticeId, memberPrincipal.getMemberId());
+    }
+
     /*
      * 공지사항 읽음 처리
      */

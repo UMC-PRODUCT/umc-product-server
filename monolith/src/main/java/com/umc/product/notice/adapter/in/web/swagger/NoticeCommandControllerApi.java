@@ -150,24 +150,20 @@ public interface NoticeCommandControllerApi {
 
     @Operation(
         operationId = "NOTICE-204",
-        summary = "공지사항 리마인더 발송",
-        description = "공지를 읽지 않은 사용자에게 푸시 알림을 재발송합니다. "
-            + "읽음 현황 API(GET /notices/{noticeId}/status)에서 UNREAD 사용자 목록을 먼저 조회한 뒤, "
-            + "리마인드할 챌린저 ID들을 targetIds로 전달하세요."
+        summary = "선택한 미확인자에게 재알림 발송",
+        description = """
+            챌린저 공지의 작성자와 SUPER_ADMIN이 재알림을 보낼 수 있습니다.
+            수신 현황(GET /api/v1/notices/{noticeId}/read-status)에서 선택한 챌린저 ID를 targetIds로 전달하세요.
+            하나 이상의 ID를 지정할 수 있으며, 요청 시점에 게시 대상이면서 공지를 읽지 않은 회원을 발송 대상으로 확정합니다.
+            선택 발송은 횟수 제한 없이 가능하며 전체 발송의 일일 횟수에도 포함되지 않습니다.
+            해당 회원이 없으면 400(NOTICE-0015)을 반환합니다. 운영진 공지에는 재알림을 보낼 수 없습니다.
+            """
     )
     @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "발송 성공"
-        ),
-        @ApiResponse(
-            responseCode = "404",
-            description = "공지사항을 찾을 수 없음"
-        ),
-        @ApiResponse(
-            responseCode = "400",
-            description = "잘못된 요청"
-        )
+        @ApiResponse(responseCode = "200", description = "재알림 요청 처리 완료"),
+        @ApiResponse(responseCode = "400", description = "운영진 공지, 미확인 대상 없음 또는 잘못된 요청"),
+        @ApiResponse(responseCode = "403", description = "재알림 발송 권한 없음"),
+        @ApiResponse(responseCode = "404", description = "공지 또는 공지 대상을 찾을 수 없음")
     })
     void sendNoticeReminder(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
@@ -195,6 +191,32 @@ public interface NoticeCommandControllerApi {
         )
     })
     void recordNoticeRead(
+        @Parameter(description = "공지사항 ID", required = true)
+        @PathVariable Long noticeId,
+
+        @Parameter(hidden = true)
+        @CurrentMember MemberPrincipal memberPrincipal
+    );
+
+    @Operation(
+        operationId = "NOTICE-206",
+        summary = "미확인자 전체에게 재알림 발송",
+        description = """
+            챌린저 공지의 작성자와 SUPER_ADMIN이 호출할 수 있습니다. 요청 본문은 없습니다.
+            재알림 요청 시점에 원래 공지의 대상 조건을 충족하고 공지를 읽지 않은 회원 전원을 발송 대상으로 확정합니다.
+            게시 후 대상에 합류한 회원도 포함하며, 대상에서 벗어난 회원은 제외합니다. 기존 공지에도 같은 기준을 적용합니다.
+            전체 발송은 한국 시간 기준 공지당 하루 한 번입니다. 미확인 대상이 없으면 일일 횟수를 사용하지 않습니다.
+            운영진 공지에는 재알림을 보낼 수 없습니다.
+            """
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "전체 재알림 요청 처리 완료"),
+        @ApiResponse(responseCode = "400", description = "운영진 공지 또는 미확인 대상 없음"),
+        @ApiResponse(responseCode = "403", description = "재알림 발송 권한 없음"),
+        @ApiResponse(responseCode = "404", description = "공지 또는 공지 대상을 찾을 수 없음"),
+        @ApiResponse(responseCode = "429", description = "해당 공지의 당일 전체 재알림 횟수 초과")
+    })
+    void remindAllUnread(
         @Parameter(description = "공지사항 ID", required = true)
         @PathVariable Long noticeId,
 

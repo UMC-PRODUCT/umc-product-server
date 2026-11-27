@@ -1,10 +1,12 @@
 package com.umc.product.authorization.application.port.out;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import com.umc.product.authorization.domain.ChallengerRole;
+import com.umc.product.authorization.domain.RoleAttribute;
 
 /**
  * Challenger의 Role 정보를 조회하는 Port
@@ -45,4 +47,7 @@ public interface LoadChallengerRolePort {
      * ID로 ChallengerRole 조회 - 없으면 예외
      */
     ChallengerRole getById(Long id);
+
+    /** 대상 기수의 역할과 기수에 관계없이 열람 가능한 총괄단 역할을 회원별로 조회한다. 기수가 없으면 전체 역할을 조회한다. */
+    Map<Long, List<RoleAttribute>> mapRolesByMemberIncludingCentralCore(Long gisuId);
 }

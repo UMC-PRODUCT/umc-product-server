@@ -1,6 +1,7 @@
 package com.umc.product.member.adapter.out.persistence;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,11 @@ public class MemberSystemRolePersistenceAdapter implements LoadMemberSystemRoleP
     @Override
     public List<MemberSystemRole> listByMemberId(Long memberId) {
         return memberSystemRoleJpaRepository.findAllByMemberId(memberId);
+    }
+
+    @Override
+    public Set<Long> listSuperAdminMemberIds() {
+        return memberSystemRoleJpaRepository.findMemberIdsByRoleType(MemberSystemRoleType.SUPER_ADMIN);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.umc.product.authorization.adapter.out.persistence;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
 import com.umc.product.authorization.application.port.out.SaveChallengerRolePort;
 import com.umc.product.authorization.domain.ChallengerRole;
+import com.umc.product.authorization.domain.RoleAttribute;
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 
@@ -63,5 +65,10 @@ public class ChallengerRoleAdapter implements LoadChallengerRolePort, SaveChalle
     @Override
     public void delete(ChallengerRole challengerRole) {
         jpaRepository.delete(challengerRole);
+    }
+
+    @Override
+    public Map<Long, List<RoleAttribute>> mapRolesByMemberIncludingCentralCore(Long gisuId) {
+        return queryRepository.mapRolesByMemberIncludingCentralCore(gisuId);
     }
 }

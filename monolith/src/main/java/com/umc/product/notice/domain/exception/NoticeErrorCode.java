@@ -15,7 +15,7 @@ public enum NoticeErrorCode implements BaseCode {
     ALREADY_PUBLISHED_NOTICE(HttpStatus.BAD_REQUEST, "NOTICE-0002", "이미 게시된 공지예요. 게시 상태를 확인해주세요."),
     INVALID_NOTICE_TITLE(HttpStatus.BAD_REQUEST, "NOTICE-0003", "공지 제목이 올바르지 않아요. 제목을 확인해주세요."),
     INVALID_NOTICE_CONTENT(HttpStatus.BAD_REQUEST, "NOTICE-0004", "공지 내용이 올바르지 않아요. 내용을 확인해주세요."),
-    INVALID_NOTICE_STATUS_FOR_REMINDER(HttpStatus.BAD_REQUEST, "NOTICE-0005", "현재 상태에서는 공지 알림을 보낼 수 없어요. 공지 상태를 확인해주세요."),
+    INVALID_NOTICE_STATUS_FOR_REMINDER(HttpStatus.BAD_REQUEST, "NOTICE-0005", "운영진 공지에는 재알림을 보낼 수 없어요."),
     AUTHOR_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-0006", "공지 작성자 정보가 필요해요. 로그인 정보를 확인해주세요."),
     NOTICE_SCOPE_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-0007", "공지 대상 범위를 선택해주세요."),
     NOTICE_AUTHOR_MISMATCH(HttpStatus.FORBIDDEN, "NOTICE-0008", "공지 작성자만 수정할 수 있어요."),
@@ -27,7 +27,8 @@ public enum NoticeErrorCode implements BaseCode {
     NO_TARGET_FOUND(HttpStatus.NOT_FOUND, "NOTICE-0011", "공지 수신 대상을 찾을 수 없어요. 대상 설정을 다시 확인해주세요."),
     INVALID_TARGET_PART(HttpStatus.BAD_REQUEST, "NOTICE-0013",
         "더 이상 사용하지 않는 파트는 공지 대상으로 지정할 수 없어요. 현재 파트를 선택해주세요."),
-
+    REMINDER_DAILY_LIMIT_REACHED(HttpStatus.TOO_MANY_REQUESTS, "NOTICE-0014", "이 공지의 전체 재알림은 오늘 이미 보냈어요. 내일 다시 시도해주세요."),
+    NO_UNREAD_REMINDER_TARGET(HttpStatus.BAD_REQUEST, "NOTICE-0015", "재알림을 보낼 미확인 대상이 없어요. 수신 현황을 새로고침해주세요."),
 
     VOTE_IDS_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0001", "투표를 1개 이상 선택해주세요."),
     IMAGE_URLS_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0002", "이미지 링크를 1개 이상 입력해주세요."),

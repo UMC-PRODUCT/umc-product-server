@@ -542,4 +542,12 @@ public class ChallengerQueryRepository {
             )
             .exists();
     }
+
+    public List<Challenger> listByGisuOrMemberIds(Long gisuId, Set<Long> memberIds) {
+        return queryFactory.selectFrom(challenger)
+            .join(gisu).on(gisu.id.eq(challenger.gisuId))
+            .where(gisuId == null ? null : challenger.gisuId.eq(gisuId).or(challenger.memberId.in(memberIds)))
+            .orderBy(gisu.generation.desc(), challenger.id.desc())
+            .fetch();
+    }
 }

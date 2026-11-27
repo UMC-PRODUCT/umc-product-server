@@ -1,10 +1,9 @@
 package com.umc.product.notice.application.service.query;
 
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -14,8 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.GetNoticeContentUseCase;
@@ -34,21 +31,17 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeVoteInfo;
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
-import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
 import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
+import com.umc.product.notice.application.service.query.NoticeReadAudienceService.Reader;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeClassification;
-import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.NoticeTargetInfo;
-import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
 import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.enums.NoticeTargetPattern;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
-import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,17 +55,15 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private static final int DEFAULT_PAGE_SIZE = 20;
 
     private final LoadNoticePort loadNoticePort;
-    private final LoadNoticeReadPort loadNoticeReadPort;
     private final LoadNoticeTargetPort loadNoticeTargetPort;
     private final LoadNoticeImagePort loadNoticeImagePort;
     private final LoadNoticeLinkPort loadNoticeLinkPort;
     private final LoadNoticeVotePort loadNoticeVotePort;
 
-    private final GetChapterUseCase getChapterUseCase;
     private final GetMemberUseCase getMemberUseCase;
-    private final GetChallengerUseCase getChallengerUseCase;
     private final GetNoticeContentUseCase getNoticeContentUseCase;
     private final NoticeAuthorQueryService noticeAuthorQueryService;
+    private final NoticeReadAudienceService noticeReadAudienceService;
 
     @Override
     public Page<NoticeSummary> getAllNoticeSummaries(NoticeViewerInfo viewerInfo, NoticeClassification classification,
@@ -126,184 +117,38 @@ public class NoticeQueryService implements GetNoticeUseCase {
     }
 
     @Override
-    public NoticeReadStatusResult getReadStatus(GetNoticeStatusQuery command) {
-        TargetChallengerContext context = findTargetChallengerContext(command.noticeId());
-        if (context.targetChallengers().isEmpty()) {
-            return new NoticeReadStatusResult(List.of(), null, false);
-        }
-
-        // 조직 필터 적용
-        List<ChallengerInfo> filteredByOrg = context.targetChallengers().stream()
-            .filter(
-                challenger -> isOrganizationMatch(command, challenger, context.memberMap().get(challenger.memberId()),
-                    context.chapterCache()))
+    public NoticeReadStatusResult getReadStatus(GetNoticeStatusQuery query) {
+        List<Reader> page = noticeReadAudienceService.listReaders(query.noticeId()).stream()
+            .filter(reader -> reader.matches(query))
+            .filter(reader -> query.cursorId() == null || reader.cursor() > query.cursorId())
+            .sorted(Comparator.comparingLong(Reader::cursor))
+            .limit(DEFAULT_PAGE_SIZE + 1)
             .toList();
+        boolean hasNext = page.size() > DEFAULT_PAGE_SIZE;
+        List<Reader> readers = hasNext ? page.subList(0, DEFAULT_PAGE_SIZE) : page;
+        Map<Long, MemberInfo> members = getMemberUseCase.findAllByIds(readers.stream()
+            .map(reader -> reader.challenger().memberId()).collect(Collectors.toSet()));
 
-        if (filteredByOrg.isEmpty()) {
-            return new NoticeReadStatusResult(List.of(), null, false);
-        }
-
-        List<NoticeRead> reads = loadNoticeReadPort.findNoticeReadByNoticeId(command.noticeId());
-        Map<Long, NoticeRead> readMap = reads.stream()
-            .collect(Collectors.toMap(NoticeRead::getChallengerId, Function.identity()));
-
-        // 읽음/안읽음 상태에 따라 필터링
-        List<ChallengerInfo> filteredByStatus = switch (command.status()) {
-            case READ -> filteredByOrg.stream()
-                .filter(challenger -> readMap.containsKey(challenger.challengerId()))
-                .toList();
-            case UNREAD -> filteredByOrg.stream()
-                .filter(challenger -> !readMap.containsKey(challenger.challengerId()))
-                .toList();
-        };
-
-        // 커서 기반 페이지네이션 적용
-        int startIdx = findCursorIndex(filteredByStatus, readMap, command);
-
-        List<ChallengerInfo> pagedChallengers = filteredByStatus.stream()
-            .skip(startIdx)
-            .limit(DEFAULT_PAGE_SIZE + 1)  // 다음 페이지 존재 여부 확인용
-            .toList();
-
-        boolean hasNext = pagedChallengers.size() > DEFAULT_PAGE_SIZE;
-        List<ChallengerInfo> resultChallengers = hasNext
-            ? pagedChallengers.subList(0, DEFAULT_PAGE_SIZE)
-            : pagedChallengers;
-
-        List<NoticeReadStatusInfo> content = resultChallengers.stream()
-            .map(challenger -> toReadStatusInfo(challenger, context.memberMap().get(challenger.memberId()),
-                context.chapterCache()))
-            .toList();
-
-        Long nextCursorId = content.isEmpty() ? null : switch (command.status()) {
-            case READ -> readMap.get(content.get(content.size() - 1).challengerId()).getId();
-            case UNREAD -> content.get(content.size() - 1).challengerId();
-        };
-
-        return new NoticeReadStatusResult(content, nextCursorId, hasNext);
+        List<NoticeReadStatusInfo> content = readers.stream()
+            .filter(reader -> members.containsKey(reader.challenger().memberId()))
+            .map(reader -> {
+                MemberInfo member = members.get(reader.challenger().memberId());
+                return new NoticeReadStatusInfo(reader.challenger().challengerId(), member.name(),
+                    member.profileImageLink(), reader.challenger().part(), member.schoolId(), member.schoolName(),
+                    reader.chapter() == null ? null : reader.chapter().id(),
+                    reader.chapter() == null ? null : reader.chapter().name());
+            }).toList();
+        Long nextCursor = readers.isEmpty() ? null : readers.getLast().cursor();
+        return new NoticeReadStatusResult(content, nextCursor, hasNext);
     }
 
     @Override
     public NoticeReadStatusSummary getReadStatistics(Long noticeId) {
-        List<Long> targetIds = findTargetChallengerIds(noticeId);
-
-        int totalCount = targetIds.size();
-        if (totalCount == 0) {
-            return new NoticeReadStatusSummary(0, 0, 0, 0f);
-        }
-
-        int readCount = (int) loadNoticeReadPort.countReadsByChallengerIdIn(noticeId, targetIds);
-        int unreadCount = totalCount - readCount;
-        float readRate = (float) readCount / totalCount * 100;
-
-        return new NoticeReadStatusSummary(totalCount, readCount, unreadCount, readRate);
+        List<Reader> readers = noticeReadAudienceService.listReaders(noticeId);
+        int total = readers.size();
+        int read = (int) readers.stream().filter(reader -> reader.readId() != null).count();
+        return new NoticeReadStatusSummary(total, read, total - read, total == 0 ? 0f : 100f * read / total);
     }
-
-    // ====== PRIVATE =====
-
-    /**
-     * 공지 대상 챌린저 조회를 위한 공통 컨텍스트를 생성합니다.
-     */
-    private TargetChallengerContext findTargetChallengerContext(Long noticeId) {
-        NoticeTarget target = loadNoticeTargetPort.findByNoticeId(noticeId)
-            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
-        NoticeTargetInfo targetInfo = NoticeTargetInfo.from(target);
-
-        List<ChallengerInfo> challengers;
-
-        // 전체 기수 공지 여부
-        if (targetInfo.targetGisuId() != null) {
-            challengers = getChallengerUseCase.getAllByGisuId(targetInfo.targetGisuId());
-        } else {
-            // 모든 기수 대상 공지: DB 쿼리에서 멤버당 최신 기수 챌린저 1건만 조회 (읽음 현황 조회 시 혼선 방지)
-            challengers = getChallengerUseCase.getAllLatestGisuPerMemberWithoutChallengerPoints();
-        }
-
-        if (challengers.isEmpty()) {
-            return new TargetChallengerContext(List.of(), Map.of(), new HashMap<>());
-        }
-
-        Map<Long, MemberInfo> memberMap = getMemberUseCase.findAllByIds(
-            challengers.stream().map(ChallengerInfo::memberId).collect(Collectors.toSet())
-        );
-
-        // 필터링 전에 필요한 챕터 정보를 1번 쿼리로 선점해 캐시에 채워둠
-        Set<Long> gisuIds = challengers.stream()
-            .map(ChallengerInfo::gisuId)
-            .collect(Collectors.toSet());
-
-        Set<Long> schoolIds = challengers.stream()
-            .map(c -> memberMap.get(c.memberId()))
-            .filter(Objects::nonNull)
-            .map(MemberInfo::schoolId)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
-
-        Map<ChapterKey, ChapterInfo> chapterCache = new HashMap<>();
-        getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(gisuIds, schoolIds)
-            .forEach((gisuId, schoolMap) ->
-                schoolMap.forEach((schoolId, info) ->
-                    chapterCache.put(new ChapterKey(gisuId, schoolId), info)
-                )
-            );
-
-        // 조건에 맞는 챌린저 필터링
-        List<ChallengerInfo> targetChallengers = challengers.stream()
-            .filter(challenger -> isTargetChallenger(targetInfo, challenger, memberMap.get(challenger.memberId()),
-                chapterCache))
-            .toList();
-
-        return new TargetChallengerContext(targetChallengers, memberMap, chapterCache);
-    }
-
-    /**
-     * 공지 대상 챌린저 ID 목록을 반환합니다. (경량 조회)
-     * <p>
-     * 통계 집계처럼 ID만 필요한 경우 사용합니다.
-     */
-    private List<Long> findTargetChallengerIds(Long noticeId) {
-        NoticeTarget target = loadNoticeTargetPort.findByNoticeId(noticeId)
-            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
-        NoticeTargetInfo targetInfo = NoticeTargetInfo.from(target);
-
-        List<ChallengerInfo> challengers;
-        if (targetInfo.targetGisuId() != null) {
-            challengers = getChallengerUseCase.getAllByGisuId(targetInfo.targetGisuId());
-        } else {
-            challengers = getChallengerUseCase.getAllLatestGisuPerMemberWithoutChallengerPoints();
-        }
-
-        if (challengers.isEmpty()) {
-            return List.of();
-        }
-
-        Map<Long, Long> schoolIdMap = getMemberUseCase.findAllSchoolIdsByIds(
-            challengers.stream().map(ChallengerInfo::memberId).collect(Collectors.toSet())
-        );
-
-        Set<Long> gisuIds = challengers.stream()
-            .map(ChallengerInfo::gisuId)
-            .collect(Collectors.toSet());
-
-        Set<Long> schoolIds = schoolIdMap.values().stream()
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
-
-        Map<ChapterKey, ChapterInfo> chapterCache = new HashMap<>();
-        getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(gisuIds, schoolIds)
-            .forEach((gisuId, schoolMap) ->
-                schoolMap.forEach((schoolId, info) ->
-                    chapterCache.put(new ChapterKey(gisuId, schoolId), info)
-                )
-            );
-
-        return challengers.stream()
-            .filter(challenger -> isTargetChallenger(targetInfo, challenger,
-                schoolIdMap.get(challenger.memberId()), chapterCache))
-            .map(ChallengerInfo::challengerId)
-            .toList();
-    }
-
 
     /**
      * 조회 범위(지부/학교) 권한 검증.
@@ -439,134 +284,6 @@ public class NoticeQueryService implements GetNoticeUseCase {
             () -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
-    private boolean isTargetChallenger(
-        NoticeTargetInfo targetInfo,
-        ChallengerInfo challenger,
-        MemberInfo memberInfo,
-        Map<ChapterKey, ChapterInfo> chapterCache
-    ) {
-        if (memberInfo == null) {
-            return false;
-        }
-
-        ChapterInfo chapterInfo = getCachedChapterInfo(challenger.gisuId(), memberInfo.schoolId(), chapterCache);
-        Long chapterId = chapterInfo != null ? chapterInfo.id() : null;
-
-        return targetInfo.isTarget(
-            challenger.gisuId(),
-            chapterId,
-            memberInfo.schoolId(),
-            challenger.part()
-        );
-    }
-
-    private boolean isTargetChallenger(
-        NoticeTargetInfo targetInfo,
-        ChallengerInfo challenger,
-        Long schoolId,
-        Map<ChapterKey, ChapterInfo> chapterCache
-    ) {
-        if (schoolId == null) {
-            return false;
-        }
-
-        ChapterInfo chapterInfo = getCachedChapterInfo(challenger.gisuId(), schoolId, chapterCache);
-        Long chapterId = chapterInfo != null ? chapterInfo.id() : null;
-
-        return targetInfo.isTarget(
-            challenger.gisuId(),
-            chapterId,
-            schoolId,
-            challenger.part()
-        );
-    }
-
-    private boolean isOrganizationMatch(
-        GetNoticeStatusQuery command,
-        ChallengerInfo challenger,
-        MemberInfo memberInfo,
-        Map<ChapterKey, ChapterInfo> chapterCache
-    ) {
-        if (command.filterType() == null || command.filterType() == NoticeReadStatusFilterType.ALL) {
-            return true;
-        }
-
-        if (memberInfo == null || command.organizationId() == null || command.organizationId().isEmpty()) {
-            return false;
-        }
-
-        ChapterInfo chapterInfo = getCachedChapterInfo(challenger.gisuId(), memberInfo.schoolId(), chapterCache);
-        Long chapterId = chapterInfo != null ? chapterInfo.id() : null;
-
-        return switch (command.filterType()) {
-            case SCHOOL -> command.organizationId().contains(memberInfo.schoolId());
-            case CHAPTER -> chapterId != null && command.organizationId().contains(chapterId);
-            case ALL -> true;
-        };
-    }
-
-    private ChapterInfo getCachedChapterInfo(Long gisuId, Long schoolId, Map<ChapterKey, ChapterInfo> cache) {
-        // 대상 챌린저의 모든 (기수, 학교) 조합을 미리 채웠으므로, 없는 키는 그 기수에 지부가 없는 학교다.
-        return cache.get(new ChapterKey(gisuId, schoolId));
-    }
-
-    private NoticeReadStatusInfo toReadStatusInfo(
-        ChallengerInfo challenger,
-        MemberInfo memberInfo,
-        Map<ChapterKey, ChapterInfo> chapterCache
-    ) {
-        ChapterInfo chapterInfo = memberInfo != null
-            ? getCachedChapterInfo(challenger.gisuId(), memberInfo.schoolId(), chapterCache)
-            : null;
-
-        Long chapterId = chapterInfo != null ? chapterInfo.id() : null;
-        String chapterName = chapterInfo != null ? chapterInfo.name() : null;
-
-        return new NoticeReadStatusInfo(
-            challenger.challengerId(),
-            memberInfo != null ? memberInfo.name() : null,
-            memberInfo != null ? memberInfo.profileImageLink() : null,
-            challenger.part(),
-            memberInfo != null ? memberInfo.schoolId() : null,
-            memberInfo != null ? memberInfo.schoolName() : null,
-            chapterId,
-            chapterName
-        );
-    }
-
-    /**
-     * 커서 위치 이후의 시작 인덱스를 찾습니다.
-     */
-    private int findCursorIndex(
-        List<ChallengerInfo> challengers,
-        Map<Long, NoticeRead> readMap,
-        GetNoticeStatusQuery command
-    ) {
-        if (command.cursorId() == null) {
-            return 0;
-        }
-
-        for (int i = 0; i < challengers.size(); i++) {
-            ChallengerInfo challenger = challengers.get(i);
-            Long currentCursorId = switch (command.status()) {
-                case READ -> readMap.get(challenger.challengerId()).getId();
-                case UNREAD -> challenger.challengerId();
-            };
-
-            if (currentCursorId.equals(command.cursorId())) {
-                return i + 1;  // 커서 다음부터 시작
-            }
-        }
-
-        return 0;  // 커서를 찾지 못하면 처음부터
-    }
-
-    // ChapterInfo 캐싱용 키
-    private record ChapterKey(Long gisuId, Long schoolId) {
-    }
-
-    // =============== PRIVATE records ===============
-
     private record NoticeQueryData(
         Map<Long, NoticeTarget> targetMap,
         Map<Long, MemberInfo> memberMap,
@@ -576,12 +293,4 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Map<Long, NoticeAuthorInfo> authorByMemberId
     ) {
     }
-
-    private record TargetChallengerContext(
-        List<ChallengerInfo> targetChallengers,
-        Map<Long, MemberInfo> memberMap,
-        Map<ChapterKey, ChapterInfo> chapterCache
-    ) {
-    }
-
 }

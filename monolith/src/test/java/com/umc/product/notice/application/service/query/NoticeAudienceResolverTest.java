@@ -108,8 +108,10 @@ class NoticeAudienceResolverTest {
         given(getChallengerUseCase.listBasicByGisuId(10L)).willReturn(List.of(
             basicChallenger(1L, ChallengerPart.WEB_PRODUCT_ENGINEER),
             basicChallenger(2L, ChallengerPart.MOBILE_PRODUCT_ENGINEER),
-            basicChallenger(3L, ChallengerPart.WEB_PRODUCT_ENGINEER)));
-        given(getMemberUseCase.findAllNamesByIds(Set.of(1L, 2L, 3L))).willReturn(Map.of(1L, "웹", 2L, "모바일"));
+            basicChallenger(3L, ChallengerPart.WEB_PRODUCT_ENGINEER),
+            basicChallenger(4L, null)));
+        given(getMemberUseCase.findAllNamesByIds(Set.of(1L, 2L, 3L, 4L)))
+            .willReturn(Map.of(1L, "웹", 2L, "모바일", 4L, "수강 없는 회원"));
 
         // when
         List<Long> result = sut.resolve(new NoticeTargetInfo(10L, null, null,
@@ -118,7 +120,7 @@ class NoticeAudienceResolverTest {
         // then
         assertThat(result).containsExactly(1L);
         verify(getChallengerUseCase, never()).getAllByGisuId(10L);
-        verify(getMemberUseCase, never()).findAllByIds(Set.of(1L, 2L, 3L));
+        verify(getMemberUseCase, never()).findAllByIds(Set.of(1L, 2L, 3L, 4L));
         verifyNoInteractions(getChapterUseCase, listChallengerRoleUseCase);
     }
 

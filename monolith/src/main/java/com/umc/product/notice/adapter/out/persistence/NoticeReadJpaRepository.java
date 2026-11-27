@@ -13,6 +13,14 @@ import com.umc.product.notice.domain.NoticeRead;
 public interface NoticeReadJpaRepository extends JpaRepository<NoticeRead, Long> {
     List<NoticeRead> findAllByNoticeId(Long noticeId);
 
+    @Modifying
+    @Query(value = """
+        INSERT INTO notice_read (notice_id, challenger_id, created_at, updated_at)
+        VALUES (:noticeId, :challengerId, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT (notice_id, challenger_id) DO NOTHING
+        """, nativeQuery = true)
+    void insertIfAbsent(@Param("noticeId") Long noticeId, @Param("challengerId") Long challengerId);
+
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM NoticeRead nr WHERE nr.notice.id = :noticeId")
     void deleteAllByNoticeId(@Param("noticeId") Long noticeId);

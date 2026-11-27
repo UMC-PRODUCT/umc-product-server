@@ -17,6 +17,7 @@ import com.umc.product.authorization.application.port.in.query.dto.ChallengerRol
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
 import com.umc.product.authorization.domain.ChallengerRole;
+import com.umc.product.authorization.domain.RoleAttribute;
 import com.umc.product.authorization.domain.SystemRoleType;
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
@@ -428,5 +429,10 @@ public class ChallengerRoleQueryService implements
             .filter(role -> role.getOrganizationId().equals(chapterId))
             .map(ChallengerRole::getChallengerRoleType)
             .anyMatch(roleType -> roleType == ChallengerRoleType.CHAPTER_PRESIDENT);
+    }
+
+    @Override
+    public Map<Long, List<RoleAttribute>> mapRolesByMemberIncludingCentralCore(Long gisuId) {
+        return loadChallengerRolePort.mapRolesByMemberIncludingCentralCore(gisuId);
     }
 }

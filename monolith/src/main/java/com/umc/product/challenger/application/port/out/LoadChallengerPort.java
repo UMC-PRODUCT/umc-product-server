@@ -82,4 +82,6 @@ public interface LoadChallengerPort {
      * 각 멤버별 generation이 가장 높은 기수의 챌린저 목록 조회
      */
     List<Challenger> findLatestPerMember();
+
+    List<Challenger> listByGisuOrMemberIds(Long gisuId, Set<Long> memberIds);
 }

@@ -1,6 +1,7 @@
 package com.umc.product.notice.adapter.out.persistence;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +79,11 @@ public class NoticePersistenceAdapter implements
     }
 
     @Override
+    public boolean tryReserveReminder(Long noticeId, LocalDate reminderDate) {
+        return noticeJpaRepository.reserveReminder(noticeId, reminderDate) == 1;
+    }
+
+    @Override
     public List<NoticeRead> findNoticeReadByNoticeId(Long noticeId) {
         return noticeReadJpaRepository.findAllByNoticeId(noticeId);
     }
@@ -108,8 +114,8 @@ public class NoticePersistenceAdapter implements
     }
 
     @Override
-    public NoticeRead saveRead(NoticeRead noticeRead) {
-        return noticeReadJpaRepository.save(noticeRead);
+    public void recordReadIfAbsent(Long noticeId, Long challengerId) {
+        noticeReadJpaRepository.insertIfAbsent(noticeId, challengerId);
     }
 
     @Override
