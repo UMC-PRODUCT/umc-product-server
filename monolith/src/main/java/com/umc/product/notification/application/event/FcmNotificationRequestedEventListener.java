@@ -32,19 +32,27 @@ public class FcmNotificationRequestedEventListener {
 
     @EventListener
     public void handle(FcmNotificationRequestedEvent event) {
+        boolean fcmEnabled = fcmProperties.enabled();
+        if (!fcmEnabled && !event.recordHistory()) {
+            log.info("[FCM 비활성화] FCM 알림 요청 이벤트를 건너뜁니다: requestId={}", event.requestId());
+            return;
+        }
+
         List<Long> memberIds = fcmAudienceResolver.resolve(event);
         if (memberIds.isEmpty()) {
             log.info("FCM 알림 발송 대상 없음: requestId={}", event.requestId());
             return;
         }
 
-        recordNotificationHistoryUseCase.recordHistory(
-            new NotificationHistory(
-                event.requestId(), event.title(), event.body(), event.imageUrl(), event.deepLink(), event.occurredAt()
-            ),
-            memberIds
-        );
-        if (!fcmProperties.enabled()) {
+        if (event.recordHistory()) {
+            recordNotificationHistoryUseCase.recordHistory(
+                new NotificationHistory(
+                    event.requestId(), event.title(), event.body(), event.imageUrl(), event.deepLink(), event.occurredAt()
+                ),
+                memberIds
+            );
+        }
+        if (!fcmEnabled) {
             return;
         }
 

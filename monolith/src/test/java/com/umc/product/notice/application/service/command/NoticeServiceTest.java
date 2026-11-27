@@ -102,6 +102,7 @@ class NoticeServiceTest {
         verify(requestFcmNotificationUseCase).request(captor.capture());
         assertThat(captor.getValue().deepLink()).isEqualTo("umc://notice/42");
         assertThat(captor.getValue().memberIds()).containsExactly(70L);
+        assertThat(captor.getValue().recordHistory()).isTrue();
     }
 
     @Test
@@ -123,6 +124,7 @@ class NoticeServiceTest {
             ArgumentCaptor.forClass(RequestFcmNotificationCommand.class);
         verify(requestFcmNotificationUseCase).request(captor.capture());
         assertThat(captor.getValue().deepLink()).isEqualTo("umc://notice/42");
+        assertThat(captor.getValue().recordHistory()).isTrue();
     }
 
     @ParameterizedTest

@@ -130,6 +130,7 @@ public class NoticeService implements ManageNoticeUseCase {
                     .title(alarmTitle)
                     .body(alarmBody)
                     .deepLink("umc://notice/" + savedNotice.getId())
+                    .recordHistory(true)
                     .build()
             );
             savedNotice.markAsNotified(Instant.now()); // 알람 발송 완료 처리
@@ -203,6 +204,7 @@ public class NoticeService implements ManageNoticeUseCase {
                 .title(alarmTitle)
                 .body(alarmBody)
                 .deepLink("umc://notice/" + notice.getId())
+                .recordHistory(true)
                 .build()
         );
     }

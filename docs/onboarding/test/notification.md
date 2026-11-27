@@ -1,7 +1,7 @@
 # Notification 테스트 케이스
 
 - 테스트 파일: 9개
-- 테스트 케이스: 30개
+- 테스트 케이스: 31개
 - 분류 기준: `Controller`, `UseCase`, `Repository`, `E2E`, `Scheduler`, `Domain`, `External Adapter`, `Support`
 
 | 카테고리 | 케이스 수 |
@@ -9,7 +9,7 @@
 | Controller / Inbound Adapter | 1 |
 | UseCase / Application Service | 11 |
 | Repository / Outbound Persistence | 2 |
-| E2E / Integration | 13 |
+| E2E / Integration | 14 |
 | Domain | 3 |
 
 ## Controller / Inbound Adapter
@@ -19,7 +19,7 @@
 
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
-| [60](../../../monolith/src/test/java/com/umc/product/notification/adapter/in/web/FcmAdminControllerTest.java#L60) | 기존 관리자 FCM 요청의 응답과 푸시 payload를 유지한다 | `POST /api/v1/notifications/admin/fcm/messages`에 기존 발송 요청을 보냄 | HTTP `202`, `requestId`와 `queuedAt` 반환, 기존 `noticeId`와 딥링크 유지 |
+| [60](../../../monolith/src/test/java/com/umc/product/notification/adapter/in/web/FcmAdminControllerTest.java#L60) | 기존 관리자 FCM 요청의 응답과 푸시 payload를 유지한다 | `POST /api/v1/notifications/admin/fcm/messages`에 기존 발송 요청을 보냄 | HTTP `202`, `requestId`와 `queuedAt` 반환, 기존 `noticeId`와 딥링크 유지, 이력 저장 요청과 응답 필드 추가 없음 |
 
 ## UseCase / Application Service
 
@@ -47,16 +47,16 @@
 
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
-| [62](../../../monolith/src/test/java/com/umc/product/notification/application/event/FcmNotificationOutboxFlowTest.java#L62) | 기존 FCM outbox JSON을 읽어 수신자와 푸시 내용을 유지한다 | 기존 형식의 FCM 발송 요청 JSON을 역직렬화 | 발송 대상, 푸시 데이터, 딥링크 복원 |
-| [92](../../../monolith/src/test/java/com/umc/product/notification/application/event/FcmNotificationOutboxFlowTest.java#L92) | FCM 요청 이벤트는 event_outbox에 저장되고 relay 후 배치 이벤트도 event_outbox에 저장된다 | 이미지 URL이 포함된 요청과 활성 토큰 501개 | 요청 트랜잭션에서 수신자 이력 저장 호출과 500개·1개 발송 배치 등록, 이미지 URL 유지 |
+| [63](../../../monolith/src/test/java/com/umc/product/notification/application/event/FcmNotificationOutboxFlowTest.java#L63) | 기존 FCM outbox JSON을 읽어 수신자와 푸시 내용을 유지한다 | 이력 저장 필드가 없는 기존 형식의 FCM 발송 요청 JSON을 처리 | 이력 저장 없이 기존 수신 대상, 푸시 데이터, 딥링크를 담은 발송 배치 등록 |
+| [113](../../../monolith/src/test/java/com/umc/product/notification/application/event/FcmNotificationOutboxFlowTest.java#L113) | FCM 요청 이벤트는 event_outbox에 저장되고 relay 후 배치 이벤트도 event_outbox에 저장된다 | 이력 저장을 요청한 발송과 첨부 이미지 URL, 활성 토큰 501개 | 이력 저장 호출과 500개·1개 발송 배치 등록, 기존 푸시 데이터와 딥링크 유지, 발송 배치에 `recordHistory` 미포함 |
 
 ### FcmNotificationRequestedEventListenerTest
 - 위치: `monolith/src/test/java/com/umc/product/notification/application/event/FcmNotificationRequestedEventListenerTest.java`
 
 | 라인 | 테스트 케이스 | 입력/조건 | 기대 결과 |
 |---:|---|---|---|
-| [37](../../../monolith/src/test/java/com/umc/product/notification/application/event/FcmNotificationRequestedEventListenerTest.java#L37) | 활성 토큰을 500개 단위 배치 이벤트로 분리한다 | 발송 대상 회원과 활성 토큰 501개 | 수신자 이력 저장을 호출하고 토큰을 500개·1개로 나누어 배치 등록 |
-| [68](../../../monolith/src/test/java/com/umc/product/notification/application/event/FcmNotificationRequestedEventListenerTest.java#L68) | 활성 토큰이 없거나 FCM이 비활성화되어도 대상 회원의 알림을 저장한다 | FCM 활성 상태에서 토큰이 없거나 FCM 비활성 상태 | 수신자 이력 저장을 호출하고 발송 배치는 등록하지 않음 |
+| [37](../../../monolith/src/test/java/com/umc/product/notification/application/event/FcmNotificationRequestedEventListenerTest.java#L37) | 활성 토큰을 500개 단위 배치 이벤트로 분리한다 | 이력 저장을 요청한 발송과 활성 토큰 501개 | 수신자 이력 저장을 호출하고 토큰을 500개·1개로 나누어 배치 등록 |
+| [68](../../../monolith/src/test/java/com/umc/product/notification/application/event/FcmNotificationRequestedEventListenerTest.java#L68) | 활성 토큰이 없거나 FCM이 비활성화되어도 대상 회원의 알림을 저장한다 | 이력 저장을 요청한 발송에 활성 토큰이 없거나 FCM이 비활성 상태 | 수신자 이력 저장을 호출하고 발송 배치는 등록하지 않음 |
 
 ## Repository / Outbound Persistence
 
@@ -89,11 +89,12 @@
 |---:|---|---|---|
 | [108](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L108) | 두 트랜잭션이 같은 요청과 회원의 이력을 저장하면 한 건만 커밋된다 | 동일 요청의 동일 수신자 이력을 동시에 저장 | 이력 한 건만 커밋 |
 | [149](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L149) | FCM 배치 저장 단계가 실패하면 이력도 롤백되고 재시도에서 함께 커밋된다 | 이력과 발송 배치 등록 직후 예외 발생 | 첫 시도에서 둘 다 롤백되고 재시도에서 이미지 URL을 포함한 이력과 발송 배치가 함께 커밋됨 |
-| [193](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L193) | 이력 저장이 실패하면 푸시를 보류하고 재시도로 이력을 커밋한 뒤에만 발송한다 | PostgreSQL에서 첫 이력 INSERT 실패 후 재시도 | 실패 시 배치 등록과 Firebase 호출이 없고 재시도에서 이력이 커밋된 뒤 Firebase 모의 호출이 한 번 실행됨 |
-| [251](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L251) | 구버전 소비자가 신버전 요청을 먼저 처리하면 푸시 배치는 남고 알림 이력은 누락된다 | 이력 저장 기능이 없는 소비자로 동일 발송 요청 처리 | 기존 데이터와 딥링크가 담긴 푸시 배치 한 건 등록, 알림 이력 없음 |
-| [300](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L300) | 탈퇴와 발송이 겹쳐도 탈퇴한 수신자만 제외되고 다른 수신자의 이력은 남는다 | 탈퇴 트랜잭션이 회원 잠금을 먼저 확보한 뒤 이력 저장 시도 | 탈퇴 회원의 기존 이력을 삭제하고 새 이력은 다른 수신자에게만 저장 |
-| [350](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L350) | 알림 저장이 먼저 시작되면 탈퇴는 저장이 끝난 뒤 탈퇴 회원의 이력만 삭제한다 | 이력 저장 트랜잭션이 잠금을 먼저 확보한 뒤 탈퇴 시도 | 기존 이력과 방금 저장한 이력에서 탈퇴 회원의 수신분만 삭제 |
-| [397](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L397) | 탈퇴 트랜잭션이 롤백되면 회원과 그 회원의 수신 알림 이력이 복구된다 | 탈퇴 처리로 회원과 수신 이력을 삭제한 뒤 예외 발생 | 롤백 후 회원과 수신 이력이 복구되고 다른 수신자의 이력도 조회됨 |
+| [194](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L194) | 이력 저장이 실패하면 푸시를 보류하고 재시도로 이력을 커밋한 뒤에만 발송한다 | PostgreSQL에서 첫 이력 INSERT 실패 후 재시도 | 실패 시 배치 등록과 Firebase 호출이 없고 재시도에서 이력이 커밋된 뒤 Firebase 모의 호출이 한 번 실행됨 |
+| [253](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L253) | 구버전 소비자가 신버전 요청을 먼저 처리하면 푸시 배치는 남고 알림 이력은 누락된다 | 이력 저장 기능이 없는 소비자로 동일 발송 요청 처리 | 기존 데이터와 딥링크가 담긴 푸시 배치 한 건 등록, 알림 이력 없음 |
+| [303](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L303) | 탈퇴와 발송이 겹쳐도 탈퇴한 수신자만 제외되고 다른 수신자의 이력은 남는다 | 탈퇴 트랜잭션이 회원 잠금을 먼저 확보한 뒤 이력 저장 시도 | 탈퇴 회원의 기존 이력을 삭제하고 새 이력은 다른 수신자에게만 저장 |
+| [353](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L353) | 알림 저장이 먼저 시작되면 탈퇴는 저장이 끝난 뒤 탈퇴 회원의 이력만 삭제한다 | 이력 저장 트랜잭션이 잠금을 먼저 확보한 뒤 탈퇴 시도 | 기존 이력과 방금 저장한 이력에서 탈퇴 회원의 수신분만 삭제 |
+| [400](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L400) | 탈퇴 트랜잭션이 롤백되면 회원과 그 회원의 수신 알림 이력이 복구된다 | 탈퇴 처리로 회원과 수신 이력을 삭제한 뒤 예외 발생 | 롤백 후 회원과 수신 이력이 복구되고 다른 수신자의 이력도 조회됨 |
+| [425](../../../monolith/src/test/java/com/umc/product/notification/application/event/NotificationHistoryTransactionIntegrationTest.java#L425) | 이력 기록을 요청하지 않은 일반 푸시는 공지 딥링크가 있어도 이력 없이 배치를 등록한다 | 이력 기록 지정 없이 공지 상세 딥링크가 담긴 푸시 요청 처리 | 기존 요청 형식으로 발송 배치 한 건 등록, 알림 이력 없음 |
 
 ## Domain
 

@@ -156,6 +156,7 @@ class NotificationHistoryTransactionIntegrationTest extends IntegrationTestSuppo
             .title("공지")
             .body("본문")
             .imageUrl(imageUrl)
+            .recordHistory(true)
             .build()).requestId();
         var group = OutboxProcessingGroup.BACKGROUND;
         var selection = routingPolicy.selectionFor(group);
@@ -198,6 +199,7 @@ class NotificationHistoryTransactionIntegrationTest extends IntegrationTestSuppo
             .memberIds(List.of(memberId))
             .title("공지")
             .body("본문")
+            .recordHistory(true)
             .build()).requestId();
         var group = OutboxProcessingGroup.BACKGROUND;
         var selection = routingPolicy.selectionFor(group);
@@ -258,6 +260,7 @@ class NotificationHistoryTransactionIntegrationTest extends IntegrationTestSuppo
             .body("본문")
             .data(Map.of("noticeId", "42"))
             .deepLink("umc://notice/42")
+            .recordHistory(true)
             .build()).requestId();
         String payload = jdbc.queryForObject("""
             SELECT payload FROM event_outbox
@@ -415,6 +418,34 @@ class NotificationHistoryTransactionIntegrationTest extends IntegrationTestSuppo
         // then
         assertThat(memberExists(memberId)).isTrue();
         assertThat(historyRecipientIds(history.requestId())).containsExactlyInAnyOrderElementsOf(recipients);
+    }
+
+    @Test
+    @DisplayName("이력 기록을 요청하지 않은 일반 푸시는 공지 딥링크가 있어도 이력 없이 배치를 등록한다")
+    void 이력_기록을_요청하지_않으면_푸시_배치만_등록한다() throws Exception {
+        // given
+        Long memberId = members.일반("일반푸시수신자").getId();
+        tokens.FCM_토큰(memberId, "push-only-installation", "push-only-token");
+        UUID requestId = requestNotification.request(RequestFcmNotificationCommand.builder()
+            .memberIds(List.of(memberId))
+            .title("일반 푸시")
+            .body("본문")
+            .deepLink("umc://notice/42")
+            .build()).requestId();
+        String payload = jdbc.queryForObject("""
+            SELECT payload FROM event_outbox
+            WHERE event_type = 'notification.fcm.requested' AND payload::jsonb ->> 'requestId' = ?
+            """, String.class, requestId.toString());
+        var group = OutboxProcessingGroup.BACKGROUND;
+
+        // when
+        assertThat(relay.relay(group, routingPolicy.selectionFor(group), 1)).isEqualTo(1);
+
+        // then
+        assertThat(objectMapper.readTree(payload).has("recordHistory")).isFalse();
+        assertThat(requestStatus(requestId)).isEqualTo("PUBLISHED");
+        assertThat(batchCount(requestId)).isEqualTo(1);
+        assertThat(historyCount(requestId)).isZero();
     }
 
     private Long createWithdrawableMember() {

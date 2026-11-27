@@ -86,11 +86,13 @@ class FcmAdminControllerTest {
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.result.requestId").value(requestId.toString()))
             .andExpect(jsonPath("$.result.queuedAt").value("2026-06-20T00:00:00Z"))
+            .andExpect(jsonPath("$.result.recordHistory").doesNotExist())
             .andExpect(jsonPath("$.result.notificationType").doesNotExist());
 
         then(requestFcmNotificationUseCase).should().request(argThat(command ->
             "1".equals(command.data().get("noticeId"))
                 && "umc://notices/1".equals(command.deepLink())
+                && !command.recordHistory()
         ));
     }
 

@@ -31,9 +31,10 @@ public class NotificationHistoryQueryController {
     @GetMapping
     @Operation(
         operationId = "NOTIFICATION-001",
-        summary = "내 알림 목록 조회",
+        summary = "내 알림 목록 조회 (공지·리마인더)",
         description = """
             로그인한 회원의 알림을 커서 기반으로 최신순 조회합니다.
+            현재 조회 범위는 공지 등록·리마인더 알림입니다.
             첫 요청에서는 cursor를 생략하고, 다음 페이지는 이전 응답의 nextCursor를 cursor로 전달합니다.
             """
     )

@@ -102,6 +102,7 @@ class FcmNotificationRequestedEventListenerTest {
                 .memberIds(List.of(1L, 2L))
                 .title("제목")
                 .body("본문")
+                .recordHistory(true)
                 .build()
         );
     }

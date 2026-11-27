@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -79,12 +80,32 @@ class FcmNotificationOutboxFlowTest {
               "deepLink": "umc://notice/42"
             }
             """.formatted(event.eventId(), event.requestId()));
+        var deserializer = new EventPayloadDeserializer(mapper);
+        var batchOutboxPort = new RecordingSaveEventOutboxPort();
+        var recordHistory = mock(RecordNotificationHistoryUseCase.class);
+        var listener = new FcmNotificationRequestedEventListener(
+            new FcmProperties(true, true), new FcmAudienceResolver(null, null, null),
+            new FakeLoadFcmPort(createTokens(1)),
+            new OutboxDomainEventPublisher(
+                batchOutboxPort, new EventPayloadSerializer(mapper), Tracer.NOOP, mock(OutboxCommitSignalPublisher.class)
+            ),
+            recordHistory
+        );
 
         // when
-        var restored = (FcmNotificationRequestedEvent) new EventPayloadDeserializer(mapper).deserialize(row);
+        var restored = (FcmNotificationRequestedEvent) deserializer.deserialize(row);
+        listener.handle(restored);
 
         // then
         assertThat(restored).isEqualTo(event);
+        assertThat(restored.recordHistory()).isFalse();
+        verifyNoInteractions(recordHistory);
+        assertThat(batchOutboxPort.saved).singleElement().satisfies(batchRow -> {
+            var batch = (FcmSendBatchRequestedEvent) deserializer.deserialize(batchRow);
+            assertThat(batch.tokenIds()).containsExactly(1L);
+            assertThat(batch.data()).containsExactlyEntriesOf(Map.of("noticeId", "42"));
+            assertThat(batch.deepLink()).isEqualTo("umc://notice/42");
+        });
     }
 
     @Test
@@ -104,7 +125,10 @@ class FcmNotificationOutboxFlowTest {
             .memberIds(List.of(1L, 2L))
             .title("공지")
             .body("본문")
+            .data(Map.of("noticeId", "42"))
             .imageUrl(imageUrl)
+            .deepLink("umc://notice/42")
+            .recordHistory(true)
             .build());
 
         assertThat(requestOutboxPort.saved).hasSize(1);
@@ -112,7 +136,8 @@ class FcmNotificationOutboxFlowTest {
         assertThat(requestOutbox.getEventType()).isEqualTo("notification.fcm.requested");
         assertThat(requestOutbox.getEventClass()).isEqualTo(FcmNotificationRequestedEvent.class.getName());
         assertThat(requestOutbox.getPayload())
-            .contains("\"memberIds\":[1,2]").doesNotContain("notificationType");
+            .contains("\"memberIds\":[1,2]", "\"recordHistory\":true")
+            .doesNotContain("notificationType");
 
         RecordingSaveEventOutboxPort batchOutboxPort = new RecordingSaveEventOutboxPort();
         RecordNotificationHistoryUseCase recordHistory = mock(RecordNotificationHistoryUseCase.class);
@@ -158,9 +183,14 @@ class FcmNotificationOutboxFlowTest {
             .hasSize(2)
             .extracting(EventOutbox::getEventType)
             .containsOnly("notification.fcm.batch.requested");
-        assertThat(batchOutboxPort.saved)
-            .extracting(EventOutbox::getEventClass)
-            .containsOnly(FcmSendBatchRequestedEvent.class.getName());
+        var deserializer = new EventPayloadDeserializer(objectMapper);
+        assertThat(batchOutboxPort.saved).allSatisfy(batchRow -> {
+            assertThat(batchRow.getEventClass()).isEqualTo(FcmSendBatchRequestedEvent.class.getName());
+            assertThat(batchRow.getPayload()).doesNotContain("\"recordHistory\"");
+            var batch = (FcmSendBatchRequestedEvent) deserializer.deserialize(batchRow);
+            assertThat(batch.data()).containsExactlyEntriesOf(Map.of("noticeId", "42"));
+            assertThat(batch.deepLink()).isEqualTo("umc://notice/42");
+        });
         assertThat(batchOutboxPort.saved.getFirst().getPayload()).contains("\"tokenIds\":[1,2");
         assertThat(batchOutboxPort.saved.get(1).getPayload())
             .contains("\"tokenIds\":[501]", "\"imageUrl\":\"" + imageUrl + "\"");
