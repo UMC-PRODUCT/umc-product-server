@@ -42,13 +42,13 @@ import com.umc.product.global.event.application.service.OutboxProcessingGroup;
 import com.umc.product.global.event.domain.EventOutbox;
 import com.umc.product.global.event.domain.EventOutboxStatus;
 import com.umc.product.global.logging.OperationalMetrics;
+import com.umc.product.notification.application.port.in.command.RecordNotificationHistoryUseCase;
 import com.umc.product.notification.application.port.in.dto.RequestFcmNotificationCommand;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.application.port.out.SaveFcmPort;
 import com.umc.product.notification.application.port.out.dto.FcmSendResult;
 import com.umc.product.notification.application.service.FcmAudienceResolver;
 import com.umc.product.notification.application.service.FcmNotificationCommandService;
-import com.umc.product.notification.application.service.NotificationHistoryCommandService;
 import com.umc.product.notification.domain.FcmToken;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -115,7 +115,7 @@ class FcmNotificationOutboxFlowTest {
             .contains("\"memberIds\":[1,2]").doesNotContain("notificationType");
 
         RecordingSaveEventOutboxPort batchOutboxPort = new RecordingSaveEventOutboxPort();
-        NotificationHistoryCommandService historyService = mock(NotificationHistoryCommandService.class);
+        RecordNotificationHistoryUseCase recordHistory = mock(RecordNotificationHistoryUseCase.class);
         FcmNotificationRequestedEventListener listener = new FcmNotificationRequestedEventListener(
             new FcmProperties(true, true),
             new FcmAudienceResolver(null, null, null),
@@ -123,7 +123,7 @@ class FcmNotificationOutboxFlowTest {
             new OutboxDomainEventPublisher(
                 batchOutboxPort, serializer, Tracer.NOOP, mock(OutboxCommitSignalPublisher.class)
             ),
-            historyService
+            recordHistory
         );
         AtomicBoolean transactionActiveDuringListener = new AtomicBoolean(false);
         ApplicationEventPublisher springPublisher = event -> {
@@ -150,8 +150,8 @@ class FcmNotificationOutboxFlowTest {
         );
 
         assertThat(transactionActiveDuringListener).isTrue();
-        verify(historyService).save(
-            argThat(event -> "공지".equals(event.title())), eq(List.of(1L, 2L))
+        verify(recordHistory).recordHistory(
+            argThat(history -> "공지".equals(history.title()) && imageUrl.equals(history.imageUrl())), eq(List.of(1L, 2L))
         );
         assertThat(requestOutbox.getStatus()).isEqualTo(EventOutboxStatus.PUBLISHED);
         assertThat(batchOutboxPort.saved)

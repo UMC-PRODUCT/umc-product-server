@@ -22,11 +22,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.umc.product.global.config.FcmProperties;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
 import com.umc.product.global.event.domain.DomainEvent;
+import com.umc.product.notification.application.port.in.command.RecordNotificationHistoryUseCase;
 import com.umc.product.notification.application.port.in.dto.RequestFcmNotificationCommand;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.application.service.FcmAudienceResolver;
-import com.umc.product.notification.application.service.NotificationHistoryCommandService;
 import com.umc.product.notification.domain.FcmToken;
+import com.umc.product.notification.domain.NotificationHistory;
 
 @DisplayName("FCM 알림 요청 이벤트 리스너")
 class FcmNotificationRequestedEventListenerTest {
@@ -37,13 +38,13 @@ class FcmNotificationRequestedEventListenerTest {
         // given
         FakeLoadFcmPort loadFcmPort = new FakeLoadFcmPort(createTokens(501));
         FakeDomainEventPublisher eventPublisher = new FakeDomainEventPublisher();
-        NotificationHistoryCommandService historyService = mock(NotificationHistoryCommandService.class);
+        RecordNotificationHistoryUseCase recordHistory = mock(RecordNotificationHistoryUseCase.class);
         FcmNotificationRequestedEventListener listener = new FcmNotificationRequestedEventListener(
             new FcmProperties(true, true),
             new FcmAudienceResolver(null, null, null),
             loadFcmPort,
             eventPublisher,
-            historyService
+            recordHistory
         );
         FcmNotificationRequestedEvent event = requestEvent();
 
@@ -51,7 +52,7 @@ class FcmNotificationRequestedEventListenerTest {
         listener.handle(event);
 
         // then
-        verify(historyService).save(event, event.memberIds());
+        verify(recordHistory).recordHistory(expectedHistory(event), event.memberIds());
         assertThat(eventPublisher.published).hasSize(2);
         assertThat((FcmSendBatchRequestedEvent) eventPublisher.published.get(0))
             .extracting(batch -> batch.tokenIds().size())
@@ -67,11 +68,11 @@ class FcmNotificationRequestedEventListenerTest {
     void 발송할_토큰이_없어도_알림_이력_저장(boolean fcmEnabled) {
         // given
         LoadFcmPort loadFcmPort = mock(LoadFcmPort.class);
-        NotificationHistoryCommandService historyService = mock(NotificationHistoryCommandService.class);
+        RecordNotificationHistoryUseCase recordHistory = mock(RecordNotificationHistoryUseCase.class);
         FakeDomainEventPublisher eventPublisher = new FakeDomainEventPublisher();
         FcmNotificationRequestedEventListener listener = new FcmNotificationRequestedEventListener(
             new FcmProperties(fcmEnabled, true), new FcmAudienceResolver(null, null, null),
-            loadFcmPort, eventPublisher, historyService
+            loadFcmPort, eventPublisher, recordHistory
         );
         FcmNotificationRequestedEvent event = requestEvent();
         if (fcmEnabled) {
@@ -82,13 +83,17 @@ class FcmNotificationRequestedEventListenerTest {
         listener.handle(event);
 
         // then
-        InOrder order = inOrder(historyService, loadFcmPort);
-        order.verify(historyService).save(event, event.memberIds());
+        InOrder order = inOrder(recordHistory, loadFcmPort);
+        order.verify(recordHistory).recordHistory(expectedHistory(event), event.memberIds());
         if (fcmEnabled) {
             order.verify(loadFcmPort).listActiveByMemberIds(event.memberIds());
         }
         order.verifyNoMoreInteractions();
         assertThat(eventPublisher.published).isEmpty();
+    }
+
+    private NotificationHistory expectedHistory(FcmNotificationRequestedEvent event) {
+        return new NotificationHistory(event.requestId(), "제목", "본문", null, null, event.occurredAt());
     }
 
     private FcmNotificationRequestedEvent requestEvent() {

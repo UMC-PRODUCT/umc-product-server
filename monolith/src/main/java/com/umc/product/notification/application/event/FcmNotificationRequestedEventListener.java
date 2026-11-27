@@ -8,10 +8,11 @@ import org.springframework.stereotype.Component;
 
 import com.umc.product.global.config.FcmProperties;
 import com.umc.product.global.event.application.port.out.DomainEventPublisher;
+import com.umc.product.notification.application.port.in.command.RecordNotificationHistoryUseCase;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.application.service.FcmAudienceResolver;
-import com.umc.product.notification.application.service.NotificationHistoryCommandService;
 import com.umc.product.notification.domain.FcmToken;
+import com.umc.product.notification.domain.NotificationHistory;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ public class FcmNotificationRequestedEventListener {
     private final FcmAudienceResolver fcmAudienceResolver;
     private final LoadFcmPort loadFcmPort;
     private final DomainEventPublisher eventPublisher;
-    private final NotificationHistoryCommandService notificationHistoryCommandService;
+    private final RecordNotificationHistoryUseCase recordNotificationHistoryUseCase;
 
     @EventListener
     public void handle(FcmNotificationRequestedEvent event) {
@@ -37,7 +38,12 @@ public class FcmNotificationRequestedEventListener {
             return;
         }
 
-        notificationHistoryCommandService.save(event, memberIds);
+        recordNotificationHistoryUseCase.recordHistory(
+            new NotificationHistory(
+                event.requestId(), event.title(), event.body(), event.imageUrl(), event.deepLink(), event.occurredAt()
+            ),
+            memberIds
+        );
         if (!fcmProperties.enabled()) {
             return;
         }
