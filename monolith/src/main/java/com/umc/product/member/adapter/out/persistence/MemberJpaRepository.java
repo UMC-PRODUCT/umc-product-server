@@ -17,6 +17,15 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByNickname(String nickname);
 
+    @Query(value = """
+        SELECT id
+        FROM member
+        WHERE id IN (:memberIds)
+        ORDER BY id
+        FOR SHARE
+        """, nativeQuery = true)
+    List<Long> findAllIdsForShare(@Param("memberIds") Collection<Long> memberIds);
+
     boolean existsByEmail(String email);
 
     boolean existsByNickname(String nickname);

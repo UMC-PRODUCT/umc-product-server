@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import com.umc.product.notification.application.port.in.query.dto.NotificationHistoryItemInfo;
+import com.umc.product.notification.application.port.out.DeleteNotificationHistoryPort;
 import com.umc.product.notification.application.port.out.LoadNotificationHistoryPort;
 import com.umc.product.notification.application.port.out.SaveNotificationHistoryPort;
 import com.umc.product.notification.domain.NotificationHistory;
@@ -17,7 +18,8 @@ import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
-public class NotificationHistoryPersistenceAdapter implements SaveNotificationHistoryPort, LoadNotificationHistoryPort {
+public class NotificationHistoryPersistenceAdapter implements SaveNotificationHistoryPort, LoadNotificationHistoryPort,
+    DeleteNotificationHistoryPort {
 
     private static final int BATCH_SIZE = 500;
     private static final String SELECT_BY_MEMBER = """
@@ -42,6 +44,11 @@ public class NotificationHistoryPersistenceAdapter implements SaveNotificationHi
         );
 
     private final JdbcTemplate jdbcTemplate;
+
+    @Override
+    public void deleteByRecipientMemberId(Long memberId) {
+        jdbcTemplate.update("DELETE FROM notification_history WHERE member_id = ?", memberId);
+    }
 
     @Override
     public List<NotificationHistoryItemInfo> listByMemberId(Long memberId, Long cursor, int limit) {

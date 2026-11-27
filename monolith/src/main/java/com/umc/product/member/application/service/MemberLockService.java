@@ -1,5 +1,8 @@
 package com.umc.product.member.application.service;
 
+import java.util.List;
+import java.util.Set;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,5 +30,13 @@ public class MemberLockService implements LockMemberUseCase {
     @Override
     public void lockByIdIfExists(Long memberId) {
         loadMemberPort.findByIdForUpdate(memberId);
+    }
+
+    @Override
+    public List<Long> lockExistingIdsForShare(Set<Long> memberIds) {
+        if (memberIds.isEmpty()) {
+            return List.of();
+        }
+        return loadMemberPort.listIdsForShare(memberIds);
     }
 }

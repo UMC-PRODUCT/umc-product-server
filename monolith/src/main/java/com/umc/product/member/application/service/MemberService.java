@@ -34,6 +34,7 @@ import com.umc.product.member.domain.NicknamePolicy;
 import com.umc.product.member.domain.WithdrawnMemberIdentity;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
+import com.umc.product.notification.application.port.in.command.DeleteNotificationHistoryUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.term.application.port.in.command.ManageTermAgreementUseCase;
 
@@ -56,6 +57,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
     private final DomainEventPublisher eventPublisher;
     private final EvictAuthoritySnapshotCacheUseCase evictAuthoritySnapshotCacheUseCase;
     private final DeleteMemberBlocksUseCase deleteMemberBlocksUseCase;
+    private final DeleteNotificationHistoryUseCase deleteNotificationHistoryUseCase;
     private final MemberNicknameRetentionService nicknameRetentionService;
     private final CheckChallengerDeactivationUseCase checkChallengerDeactivationUseCase;
     private final WithdrawnMemberIdentityPort withdrawnMemberIdentityPort;
@@ -202,6 +204,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
         saveMemberPort.delete(memberToDelete);
         evictAuthoritySnapshotCacheUseCase.evictByMemberId(memberId);
         deleteMemberBlocksUseCase.deleteAllInvolving(memberId);
+        deleteNotificationHistoryUseCase.deleteByRecipientMemberId(memberId);
 
         eventPublisher.publish(
             AuditLogEvent.builder()
