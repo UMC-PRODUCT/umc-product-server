@@ -175,7 +175,7 @@ class NoticeCommandControllerValidationTest extends ControllerTestSupport {
         NoticeClassification classification =
             new NoticeClassification(9L, null, null, null, NoticeTab.CHALLENGER, type);
         Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "createdAt");
-        given(noticeViewerInfoAssembler.toMemberIdAndGisuId(TEST_MEMBER_ID, 9L, null)).willReturn(viewer);
+        given(noticeViewerInfoAssembler.toViewerInfo(TEST_MEMBER_ID, classification, null)).willReturn(viewer);
         given(getNoticeUseCase.getAllNoticeSummaries(viewer, classification, pageable)).willReturn(Page.empty());
 
         // When
@@ -196,7 +196,7 @@ class NoticeCommandControllerValidationTest extends ControllerTestSupport {
         NoticeClassification classification =
             new NoticeClassification(9L, null, null, null, NoticeTab.CHALLENGER, type);
         Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "createdAt");
-        given(noticeViewerInfoAssembler.toMemberIdAndGisuId(TEST_MEMBER_ID, 9L, null)).willReturn(viewer);
+        given(noticeViewerInfoAssembler.toViewerInfo(TEST_MEMBER_ID, classification, null)).willReturn(viewer);
         given(getNoticeUseCase.searchNoticesByKeyword("제목", viewer, classification, pageable)).willReturn(Page.empty());
 
         // When

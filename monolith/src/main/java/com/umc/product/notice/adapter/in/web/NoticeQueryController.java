@@ -60,8 +60,8 @@ public class NoticeQueryController implements NoticeQueryApi {
         @ParameterObject Pageable pageable,
         @CurrentMember MemberPrincipal memberPrincipal) {
 
-        NoticeViewerInfo viewerInfo = noticeViewerInfoAssembler.toMemberIdAndGisuId(memberPrincipal.getMemberId(),
-            classification.gisuId(), challengerRoleId);
+        NoticeViewerInfo viewerInfo = noticeViewerInfoAssembler.toViewerInfo(memberPrincipal.getMemberId(),
+            classification, challengerRoleId);
         Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(viewerInfo, classification, pageable);
 
         return PageResponse.of(notices, GetNoticeSummaryResponse::from);
@@ -80,8 +80,8 @@ public class NoticeQueryController implements NoticeQueryApi {
         Pageable pageable,
         @CurrentMember MemberPrincipal memberPrincipal) {
 
-        NoticeViewerInfo viewerInfo = noticeViewerInfoAssembler.toMemberIdAndGisuId(memberPrincipal.getMemberId(),
-            classification.gisuId(), challengerRoleId);
+        NoticeViewerInfo viewerInfo = noticeViewerInfoAssembler.toViewerInfo(memberPrincipal.getMemberId(),
+            classification, challengerRoleId);
         Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(keyword, viewerInfo, classification,
             pageable);
 

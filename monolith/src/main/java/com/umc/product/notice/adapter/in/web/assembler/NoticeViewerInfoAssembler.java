@@ -16,6 +16,7 @@ import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
+import com.umc.product.notice.domain.NoticeClassification;
 import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
@@ -40,14 +41,15 @@ public class NoticeViewerInfoAssembler {
     private final GetChapterUseCase getChapterUseCase;
     private final GetGisuUseCase getGisuUseCase;
 
-    public NoticeViewerInfo toMemberIdAndGisuId(Long memberId, Long gisuId, Long challengerRoleId) {
+    public NoticeViewerInfo toViewerInfo(Long memberId, NoticeClassification classification, Long challengerRoleId) {
+        Long gisuId = classification.gisuId();
         if (challengerRoleId == null) {
             boolean superAdmin = getChallengerRoleUseCase.isSuperAdmin(memberId);
             ChallengerRoleInfo role = superAdmin ? null : resolveRole(memberId, gisuId);
             return buildViewerInfo(gisuId, role, superAdmin, getMemberSchoolId(memberId),
                 resolveParts(memberId, gisuId));
         }
-        ChallengerRoleInfo role = getSelectedRole(memberId, gisuId, challengerRoleId);
+        ChallengerRoleInfo role = getSelectedRole(memberId, classification, challengerRoleId);
         Long schoolId = switch (role.organizationType()) {
             case SCHOOL -> role.organizationId();
             case CHAPTER -> null;
@@ -58,14 +60,16 @@ public class NoticeViewerInfoAssembler {
         return buildViewerInfo(gisuId, role, false, schoolId, parts);
     }
 
-    private ChallengerRoleInfo getSelectedRole(Long memberId, Long gisuId, Long challengerRoleId) {
+    private ChallengerRoleInfo getSelectedRole(Long memberId, NoticeClassification classification,
+                                              Long challengerRoleId) {
         Long activeGisuId = getGisuUseCase.findActiveGisu().map(GisuInfo::gisuId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION));
         ChallengerRoleInfo role = getChallengerRoleUseCase.listByMemberIdAndGisuId(memberId, activeGisuId).stream()
             .filter(candidate -> challengerRoleId.equals(candidate.id()))
             .findFirst()
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION));
-        if (!activeGisuId.equals(gisuId) && !role.roleType().isAtLeastCentralCore()) {
+        boolean canReadOtherGisu = classification.isChallengerQuery() && role.roleType().isAtLeastCentralCore();
+        if (!activeGisuId.equals(classification.gisuId()) && !canReadOtherGisu) {
             throw new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION);
         }
         return role;

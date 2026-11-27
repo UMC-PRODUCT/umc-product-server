@@ -11,13 +11,16 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.maintenance.application.port.in.command.RefreshMaintenanceStateUseCase;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.MemberSystemRoleType;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
@@ -30,6 +33,7 @@ import com.umc.product.support.fixture.ChallengerFixture;
 import com.umc.product.support.fixture.ChallengerRoleFixture;
 import com.umc.product.support.fixture.ChapterFixture;
 import com.umc.product.support.fixture.GisuFixture;
+import com.umc.product.support.fixture.MemberFixture;
 import com.umc.product.support.fixture.SchoolFixture;
 
 @DisplayName("겸임 계정의 선택 직책별 공지 목록·검색")
@@ -41,6 +45,7 @@ class NoticeStaffListRoleIntegrationTest extends IntegrationTestSupport {
     @Autowired private SchoolFixture schoolFixture;
     @Autowired private ChallengerFixture challengerFixture;
     @Autowired private ChallengerRoleFixture roles;
+    @Autowired private MemberFixture memberFixture;
     @Autowired private SaveMemberPort members;
     @Autowired private SaveNoticePort notices;
     @Autowired private SaveNoticeTargetPort targets;
@@ -149,6 +154,47 @@ class NoticeStaffListRoleIntegrationTest extends IntegrationTestSupport {
             .andExpect(status().isForbidden());
     }
 
+    @ParameterizedTest
+    @EnumSource(value = ChallengerRoleType.class, names = {"CENTRAL_PRESIDENT", "CENTRAL_VICE_PRESIDENT"})
+    void 총괄단_View는_과거_기수의_챌린저_공지만_조회할_수_있다(ChallengerRoleType roleType) throws Exception {
+        Long roleId = roleType == ChallengerRoleType.CENTRAL_PRESIDENT
+            ? roles.중앙운영사무국_총괄(challengerId, gisuId).getId()
+            : roles.중앙운영사무국_부총괄(challengerId, gisuId).getId();
+        Long oldGisuId = gisuFixture.비활성_기수(9710L).getId();
+        notice("이전 기수 챌린저", null, NoticeTab.CHALLENGER, oldGisuId);
+
+        for (String path : List.of("/api/v1/notices", "/api/v1/notices/search")) {
+            mockMvc.perform(request(path, NoticeTab.CENTRAL_MEMBER, oldGisuId)
+                    .param("challengerRoleId", roleId.toString()))
+                .andExpect(status().isForbidden());
+            expectTitles(request(path, NoticeTab.CHALLENGER, oldGisuId).param("challengerRoleId", roleId.toString()),
+                "이전 기수 챌린저");
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/v1/notices", "/api/v1/notices/search"})
+    void 직책_ID를_생략하면_조회_기수에서_맡았던_직책으로_운영진_공지를_조회한다(String path) throws Exception {
+        Long oldGisuId = gisuFixture.비활성_기수(9710L).getId();
+        notice("이전 기수 중앙 공지", null, NoticeTab.CENTRAL_MEMBER, oldGisuId);
+        mockMvc.perform(request(path, NoticeTab.CENTRAL_MEMBER, oldGisuId))
+            .andExpect(status().isForbidden());
+
+        Long oldChallengerId = challengerFixture.웹(memberId, oldGisuId).getId();
+        roles.중앙운영사무국_부총괄(oldChallengerId, oldGisuId);
+        expectTitles(request(path, NoticeTab.CENTRAL_MEMBER, oldGisuId), "이전 기수 중앙 공지");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/v1/notices", "/api/v1/notices/search"})
+    void 슈퍼_관리자는_직책_ID_없이_과거_기수_운영진_공지를_조회한다(String path) throws Exception {
+        memberFixture.시스템_역할_부여(memberId, MemberSystemRoleType.SUPER_ADMIN);
+        Long oldGisuId = gisuFixture.비활성_기수(9710L).getId();
+        notice("이전 기수 운영진", null, NoticeTab.CENTRAL_MEMBER, oldGisuId);
+
+        expectTitles(request(path, NoticeTab.CENTRAL_MEMBER, oldGisuId), "이전 기수 운영진");
+    }
+
     private void expectTitles(MockHttpServletRequestBuilder request, String... titles) throws Exception {
         mockMvc.perform(request)
             .andExpect(status().isOk())
@@ -161,14 +207,22 @@ class NoticeStaffListRoleIntegrationTest extends IntegrationTestSupport {
     }
 
     private MockHttpServletRequestBuilder request(String path, NoticeTab tab) {
+        return request(path, tab, gisuId);
+    }
+
+    private MockHttpServletRequestBuilder request(String path, NoticeTab tab, Long targetGisuId) {
         MockHttpServletRequestBuilder request = get(path).header("Authorization", "Bearer staff-token")
-            .param("gisuId", gisuId.toString()).param("noticeTab", tab.name());
+            .param("gisuId", targetGisuId.toString()).param("noticeTab", tab.name());
         return path.endsWith("/search") ? request.param("keyword", "회의") : request;
     }
 
     private void notice(String title, Long targetSchoolId, NoticeTab tab) {
+        notice(title, targetSchoolId, tab, gisuId);
+    }
+
+    private void notice(String title, Long targetSchoolId, NoticeTab tab, Long targetGisuId) {
         Long id = notices.save(Notice.create(title, "회의 일정", memberId, false, false)).getId();
-        targets.save(NoticeTarget.builder().noticeId(id).targetGisuId(gisuId).targetSchoolId(targetSchoolId)
+        targets.save(NoticeTarget.builder().noticeId(id).targetGisuId(targetGisuId).targetSchoolId(targetSchoolId)
             .targetChallengerPart(List.of()).targetNoticeTab(tab).build());
     }
 }

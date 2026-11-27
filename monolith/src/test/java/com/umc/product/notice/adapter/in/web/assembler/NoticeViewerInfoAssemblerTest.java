@@ -27,6 +27,7 @@ import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
+import com.umc.product.notice.domain.NoticeClassification;
 import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
@@ -42,6 +43,10 @@ class NoticeViewerInfoAssemblerTest {
 
     private static final Long MEMBER_ID = 1L;
     private static final Long GISU_ID = 9L;
+    private static final NoticeClassification ACTIVE_STAFF =
+        new NoticeClassification(GISU_ID, null, null, null, NoticeTab.SCHOOL_CORE, null);
+    private static final NoticeClassification PAST_CHALLENGER =
+        new NoticeClassification(8L, null, null, null, NoticeTab.CHALLENGER, null);
 
     @Mock
     GetChallengerUseCase getChallengerUseCase;
@@ -71,7 +76,7 @@ class NoticeViewerInfoAssemblerTest {
             MemberInfo.builder().id(MEMBER_ID).build()
         ));
 
-        NoticeViewerInfo result = sut.toMemberIdAndGisuId(MEMBER_ID, GISU_ID, null);
+        NoticeViewerInfo result = sut.toViewerInfo(MEMBER_ID, ACTIVE_STAFF, null);
 
         assertThat(result.viewerRole()).isEqualTo(NoticeTab.CENTRAL_MEMBER);
         verifyNoInteractions(getChapterUseCase);
@@ -96,7 +101,7 @@ class NoticeViewerInfoAssemblerTest {
             MemberInfo.builder().id(MEMBER_ID).build()
         ));
 
-        NoticeViewerInfo result = sut.toMemberIdAndGisuId(MEMBER_ID, GISU_ID, null);
+        NoticeViewerInfo result = sut.toViewerInfo(MEMBER_ID, ACTIVE_STAFF, null);
 
         assertThat(result.memberParts()).doesNotContainNull().isEmpty();
     }
@@ -114,7 +119,7 @@ class NoticeViewerInfoAssemblerTest {
             new ChapterWithSchoolsInfo(4L, "다른 지부", List.of(
                 new ChapterWithSchoolsInfo.SchoolInfo(6L, "다른 학교")))));
         // when
-        NoticeViewerInfo result = sut.toMemberIdAndGisuId(MEMBER_ID, GISU_ID, null);
+        NoticeViewerInfo result = sut.toViewerInfo(MEMBER_ID, ACTIVE_STAFF, null);
         // then
         assertThat(result.isChapterPresident()).isTrue();
         assertThat(result.chapterId()).isEqualTo(3L);
@@ -132,7 +137,7 @@ class NoticeViewerInfoAssemblerTest {
                 .organizationType(OrganizationType.CENTRAL).responsiblePart(ChallengerPart.PLAN).build());
         given(getChapterUseCase.byGisuAndSchool(GISU_ID, 5L)).willReturn(new ChapterInfo(3L, "지부"));
 
-        NoticeViewerInfo result = sut.toMemberIdAndGisuId(MEMBER_ID, GISU_ID, 21L);
+        NoticeViewerInfo result = sut.toViewerInfo(MEMBER_ID, ACTIVE_STAFF, 21L);
 
         assertThat(result.roleType()).isEqualTo(ChallengerRoleType.SCHOOL_PART_LEADER);
         assertThat(result.memberParts()).containsExactly(ChallengerPart.DESIGN);
@@ -141,14 +146,14 @@ class NoticeViewerInfoAssemblerTest {
     }
 
     @Test
-    void 총괄_View로_과거_기수_조회_시에도_파트_필터에_쓰는_소속을_제공한다() {
+    void 총괄_View로_과거_기수_챌린저_공지_조회_시에도_파트_필터에_쓰는_소속을_제공한다() {
         givenActiveRoles(ChallengerRoleInfo.builder().id(21L).roleType(ChallengerRoleType.CENTRAL_PRESIDENT)
             .organizationType(OrganizationType.CENTRAL).build());
         given(getMemberUseCase.findAllByIds(Set.of(MEMBER_ID)))
             .willReturn(Map.of(MEMBER_ID, MemberInfo.builder().id(MEMBER_ID).schoolId(5L).build()));
         given(getChapterUseCase.byGisuAndSchool(8L, 5L)).willReturn(new ChapterInfo(4L, "과거 지부"));
 
-        NoticeViewerInfo result = sut.toMemberIdAndGisuId(MEMBER_ID, 8L, 21L);
+        NoticeViewerInfo result = sut.toViewerInfo(MEMBER_ID, PAST_CHALLENGER, 21L);
 
         assertThat(result.viewerRole()).isEqualTo(NoticeTab.CENTRAL_MEMBER);
         assertThat(result.schoolId()).isEqualTo(5L);
@@ -160,7 +165,7 @@ class NoticeViewerInfoAssemblerTest {
         givenActiveRoles(ChallengerRoleInfo.builder().id(21L).roleType(ChallengerRoleType.SCHOOL_PRESIDENT)
             .organizationType(OrganizationType.SCHOOL).organizationId(5L).build());
 
-        assertThatThrownBy(() -> sut.toMemberIdAndGisuId(MEMBER_ID, 8L, 21L))
+        assertThatThrownBy(() -> sut.toViewerInfo(MEMBER_ID, PAST_CHALLENGER, 21L))
             .isInstanceOfSatisfying(NoticeDomainException.class,
                 exception -> assertThat(exception.getBaseCode()).isEqualTo(NoticeErrorCode.NO_READ_PERMISSION));
     }
